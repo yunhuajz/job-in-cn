@@ -1,0 +1,17 @@
+# deps / build
+node_modules/
+dist/
+
+# runtime output(生成的简历/PDF/数据,不进库)
+output/
+data/
+
+# secrets
+.env
+.env.local
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
