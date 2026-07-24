@@ -1,0 +1,165 @@
+import cron, { ScheduledTask } from "node-cron";
+import { SCHEDULER_CONSTANTS } from "@/lib/constants";
+import db from "@/lib/db";
+import { runAutomation, AutomationAlreadyRunningError } from "@/lib/scraper";
+import type { JobBoard } from "@/models/automation.model";
+
+let scheduledTask: ScheduledTask | null = null;
+
+async function runDueAutomations() {
+  const now = new Date();
+  console.log(`[Scheduler] Checking for due automations at ${now.toISOString()}`);
+
+  try {
+    const dueAutomations = await db.automation.findMany({
+      where: {
+        status: "active",
+        nextRunAt: { lte: now },
+      },
+      include: {
+        resume: true,
+      },
+    });
+
+    if (dueAutomations.length === 0) {
+      console.log("[Scheduler] No automations due to run");
+      return;
+    }
+
+    console.log(`[Scheduler] Found ${dueAutomations.length} automation(s) to run`);
+
+    for (const automation of dueAutomations) {
+      if (!automation.resume) {
+        console.log(`[Scheduler] Skipping automation ${automation.id} - no resume`);
+        await db.automationRun.create({
+          data: {
+            automationId: automation.id,
+            status: "failed",
+            errorMessage: "resume_missing",
+            completedAt: new Date(),
+          },
+        });
+        continue;
+      }
+
+      // Skip if a run (manual or scheduled) is already in flight for this
+      // automation. Logger/cancel state is keyed by automationId, so overlapping
+      // runs would clobber each other.
+      const activeRun = await db.automationRun.findFirst({
+        where: {
+          automationId: automation.id,
+          status: { in: ["running", "cancelling"] },
+        },
+        select: { id: true },
+      });
+      if (activeRun) {
+        console.log(`[Scheduler] Skipping automation ${automation.id} - run already in progress`);
+        continue;
+      }
+
+      try {
+        console.log(`[Scheduler] Running automation: ${automation.name}`);
+        const result = await runAutomation({
+          id: automation.id,
+          userId: automation.userId,
+          name: automation.name,
+          jobBoard: automation.jobBoard as JobBoard,
+          keywords: automation.keywords,
+          location: automation.location,
+          sourceConfig: automation.sourceConfig,
+          resumeId: automation.resumeId,
+          matchThreshold: automation.matchThreshold,
+          scheduleHour: automation.scheduleHour,
+          nextRunAt: automation.nextRunAt,
+          lastRunAt: automation.lastRunAt,
+          status: automation.status as "active" | "paused",
+          createdAt: automation.createdAt,
+          updatedAt: automation.updatedAt,
+        });
+        console.log(`[Scheduler] Automation ${automation.name} completed: ${result.status}, saved ${result.jobsSaved} jobs`);
+      } catch (error) {
+        if (error instanceof AutomationAlreadyRunningError) {
+          console.log(`[Scheduler] Skipping automation ${automation.id} - run already in progress`);
+          continue;
+        }
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(`[Scheduler] Automation ${automation.name} failed:`, message);
+      }
+    }
+  } catch (error) {
+    console.error("[Scheduler] Error running due automations:", error);
+  }
+}
+
+export function startScheduler() {
+  if (!SCHEDULER_CONSTANTS.ENABLED) {
+    console.log("[Scheduler] Disabled via SCHEDULER_CONSTANTS.ENABLED");
+    return;
+  }
+
+  if (scheduledTask) {
+    console.log("[Scheduler] Already running");
+    return;
+  }
+
+  const cronExpression = SCHEDULER_CONSTANTS.CRON_EXPRESSION;
+
+  if (!cron.validate(cronExpression)) {
+    console.error(`[Scheduler] Invalid cron expression: ${cronExpression}`);
+    return;
+  }
+
+  console.log(`[Scheduler] Starting with schedule: ${cronExpression}`);
+
+  scheduledTask = cron.schedule(cronExpression, runDueAutomations, {
+    timezone: process.env.TZ || "UTC",
+  });
+
+  console.log("[Scheduler] Started successfully");
+}
+
+export function stopScheduler() {
+  if (scheduledTask) {
+    scheduledTask.stop();
+    scheduledTask = null;
+    console.log("[Scheduler] Stopped");
+  }
+}
+
+export function isSchedulerRunning(): boolean {
+  return scheduledTask !== null;
+}
+
+// Marks any run stuck in "running" past the stale cutoff as failed. A hard kill
+// mid-run (deploy/OOM/crash) leaves the run row in "running" forever otherwise.
+export async function reapStaleRuns(): Promise<number> {
+  const cutoff = new Date(Date.now() - SCHEDULER_CONSTANTS.STALE_RUN_TIMEOUT_MS);
+  try {
+    const result = await db.automationRun.updateMany({
+      where: { status: "running", startedAt: { lt: cutoff } },
+      data: {
+        status: "failed",
+        errorMessage: "interrupted",
+        completedAt: new Date(),
+      },
+    });
+    if (result.count > 0) {
+      console.log(`[Scheduler] Reaped ${result.count} stale running run(s)`);
+    }
+    return result.count;
+  } catch (error) {
+    console.error("[Scheduler] Failed to reap stale runs:", error);
+    return 0;
+  }
+}
+
+// Starts or stops the scheduler based on whether active automations exist
+export async function syncSchedulerState() {
+  await reapStaleRuns();
+  const activeCount = await db.automation.count({ where: { status: "active" } });
+  if (activeCount > 0) {
+    startScheduler();
+  } else {
+    stopScheduler();
+  }
+}

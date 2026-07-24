@@ -1,0 +1,221 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { ResponsiveBar } from "@nivo/bar";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { cn } from "@/lib/utils";
+
+type ChartConfig = {
+  label: string;
+  data: any[];
+  keys: string[];
+  groupMode?: "grouped" | "stacked";
+  axisLeftLegend: string;
+  tooltipLabel?: (key: string) => string;
+};
+
+type WeeklyBarChartToggleProps = {
+  charts: ChartConfig[];
+};
+
+export default function WeeklyBarChartToggle({
+  charts,
+}: WeeklyBarChartToggleProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const current = charts[activeIndex];
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    setIsSmallScreen(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const roundedData = current.data.map((item) => {
+    const newItem: any = { ...item };
+    current.keys.forEach((key) => {
+      if (typeof newItem[key] === "number") {
+        newItem[key] = Math.round(newItem[key] * 100) / 100;
+      }
+    });
+    return newItem;
+  });
+
+  const isJobsChart = current.label !== "Activities";
+  const maxValue = isJobsChart
+    ? Math.max(
+        0,
+        ...roundedData.flatMap((item) =>
+          current.keys.map((key) =>
+            typeof item[key] === "number" ? item[key] : 0,
+          ),
+        ),
+      )
+    : undefined;
+  const intTickValues = isJobsChart
+    ? Array.from({ length: (maxValue as number) + 1 }, (_, i) => i)
+    : undefined;
+
+  const totalHours =
+    current.label === "Activities"
+      ? roundedData.reduce(
+          (sum, item) =>
+            sum +
+            current.keys.reduce(
+              (keySum, key) =>
+                keySum + (typeof item[key] === "number" ? item[key] : 0),
+              0,
+            ),
+          0,
+        )
+      : null;
+
+  return (
+    <Card className="mb-2 lg:mb-0">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between mb-1 mt-3">
+          <div className="flex items-baseline gap-2">
+            <CardTitle className="text-green-600">
+              Weekly {current.label}
+            </CardTitle>
+            {totalHours !== null && (
+              <span className="text-sm text-muted-foreground">
+                {totalHours.toFixed(1)} hrs
+              </span>
+            )}
+          </div>
+          <div
+            className="flex rounded-md border text-xs"
+            data-testid="weekly-chart-toggle-group"
+          >
+            {charts.map((chart, index) => (
+              <button
+                key={chart.label}
+                onClick={() => setActiveIndex(index)}
+                className={cn(
+                  "px-2 py-1 transition-colors",
+                  index === 0 && "rounded-l-md",
+                  index === charts.length - 1 && "rounded-r-md",
+                  activeIndex === index
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted",
+                )}
+              >
+                {chart.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="h-[240px] p-3 pt-1">
+        <div className="h-[200px]">
+          <ResponsiveBar
+            data={roundedData}
+            keys={current.keys}
+            indexBy="day"
+            margin={{
+              top: 20,
+              right: 10,
+              bottom: 40,
+              left: 45,
+            }}
+            padding={0.6}
+            groupMode={current.groupMode}
+            colors={
+              current.groupMode === "stacked" ? { scheme: "nivo" } : "#2a7ef0"
+            }
+            enableTotals={current.groupMode === "stacked" ? true : false}
+            valueFormat={(value) =>
+              current.label === "Activities"
+                ? value.toFixed(1)
+                : value.toFixed(0)
+            }
+            theme={{
+              text: {
+                fill: "#9ca3af",
+              },
+              tooltip: {
+                container: {
+                  background: "#1e293b",
+                  color: "#fff",
+                },
+              },
+            }}
+            axisTop={null}
+            axisRight={null}
+            enableGridX={false}
+            enableGridY={false}
+            enableLabel={true}
+            labelTextColor={{
+              from: "color",
+              modifiers: [["darker", 1.6]],
+            }}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legendPosition: "middle",
+              legendOffset: 32,
+              truncateTickAt: 0,
+              format: isSmallScreen
+                ? (value: string) => value.split(", ")[1] ?? value
+                : undefined,
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: current.axisLeftLegend,
+              legendPosition: "middle",
+              legendOffset: -40,
+              truncateTickAt: 0,
+              tickValues: intTickValues,
+            }}
+            motionConfig="gentle"
+            tooltip={({ id, value, indexValue, color }) => (
+              <div
+                style={{
+                  background: "#1e293b",
+                  color: "#fff",
+                  padding: "6px 10px",
+                  borderRadius: 4,
+                  fontSize: 13,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 10,
+                    height: 10,
+                    background: color,
+                    borderRadius: 2,
+                    marginRight: 6,
+                  }}
+                />
+                {current.tooltipLabel
+                  ? current.tooltipLabel(String(id))
+                  : String(id) === "value"
+                    ? current.axisLeftLegend
+                        .toLowerCase()
+                        .replace(/\(.*\)/, "")
+                        .trim()
+                        .replace(/\b\w/g, (c) => c.toUpperCase())
+                    : String(id)}{" "}
+                – {indexValue}:{" "}
+                <strong>
+                  {current.label === "Activities"
+                    ? Number(value).toFixed(1)
+                    : value}
+                </strong>
+              </div>
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

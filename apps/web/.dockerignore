@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.next
+.vscode
+.git
+.env*
+
+**/*.db
+**/*.db-journal
+data/
+jobsyncdb/

@@ -1,0 +1,1090 @@
+"use client";
+import { Resume, ResumeSection, SectionType } from "@/models/profile.model";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { ResponsiveCardHeader } from "../ResponsiveCardHeader";
+import AddResumeSection, { AddResumeSectionRef } from "./AddResumeSection";
+import ContactInfoCard from "./ContactInfoCard";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "../ui/use-toast";
+import SummarySectionCard from "./SummarySectionCard";
+import ExperienceCard from "./ExperienceCard";
+import EducationCard from "./EducationCard";
+import CertificationCard from "./CertificationCard";
+import SkillsSectionCard from "./SkillsSectionCard";
+import AiResumeReviewSection from "./AiResumeReviewSection";
+import { ReviewDetails } from "./ReviewDetails";
+import { DownloadFileButton } from "./DownloadFileButton";
+import type { ResumeReviewData } from "@/models/ai.schemas";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import type { ResumeLayout } from "./resume-pdf";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import {
+  ArrowLeft,
+  MoreVertical,
+  FileDown,
+  Sparkles,
+  Check,
+  X,
+  Loader,
+  AlertTriangle,
+  Star,
+} from "lucide-react";
+import {
+  deleteResumeById,
+  deleteSkillsSection,
+  setDefaultResume,
+} from "@/actions/profile.actions";
+import { DeleteAlertDialog } from "../DeleteAlertDialog";
+import {
+  resolveImportCard,
+  ImportCardPayload,
+} from "@/actions/resumeImport.actions";
+import { ResumeImportData } from "@/models/resumeImport.schema";
+import { AiModel, defaultModel } from "@/models/ai.model";
+import { getUserSettings } from "@/actions/userSettings.actions";
+import { checkOllamaConnection } from "@/utils/ai.utils";
+import { streamResumeImport } from "@/utils/resumeImportStream.utils";
+import { extractSkillCategories } from "@/utils/skillImport.utils";
+import type { DeepPartial } from "ai";
+import {
+  hasMinResumeSections,
+  warnInsufficientResumeSections,
+} from "@/utils/resumeSections.utils";
+
+type PendingCard = {
+  id: string;
+  card: ImportCardPayload;
+};
+
+// Keywords that map to supported section types — filter these out of unrecognizedSections
+const SUPPORTED_KEYWORDS = [
+  "contact",
+  "summary",
+  "experience",
+  "education",
+  "certification",
+  "certifications",
+  "skill",
+  "skills",
+];
+
+function filterUnrecognizedSections(sections: string[]): string[] {
+  return sections.filter((section) => {
+    const lower = section.toLowerCase();
+    return !SUPPORTED_KEYWORDS.some((kw) => lower.includes(kw));
+  });
+}
+
+// Accepts partial data so cards can render progressively as the import stream
+// arrives. Entries are only shown once their key identifying field is present.
+function buildPendingCards(data: DeepPartial<ResumeImportData>): PendingCard[] {
+  const cards: PendingCard[] = [];
+
+  if (!data) return cards;
+
+  if (
+    data.contactInfo &&
+    Object.keys(data.contactInfo).some(
+      (k) => k !== "confidence" && !!(data.contactInfo as any)[k],
+    )
+  ) {
+    cards.push({
+      id: "contactInfo",
+      card: { type: "contactInfo", data: data.contactInfo as any },
+    });
+  }
+
+  if (typeof data.summary === "string" && data.summary.trim()) {
+    cards.push({
+      id: "summary",
+      card: { type: "summary", data: data.summary },
+    });
+  }
+
+  // Skills sit before experience to match the resume's section order.
+  const skillCategories = extractSkillCategories(data.skills);
+  if (skillCategories.length > 0) {
+    cards.push({
+      id: "skills",
+      card: { type: "skills", data: { categories: skillCategories } as any },
+    });
+  }
+
+  (data.experience ?? []).forEach((exp, i) => {
+    if (!exp || (!exp.company && !exp.jobTitle)) return;
+    cards.push({
+      id: `experience-${i}`,
+      card: { type: "experience", data: exp as any },
+    });
+  });
+
+  (data.education ?? []).forEach((edu, i) => {
+    if (!edu || !edu.institution) return;
+    cards.push({
+      id: `education-${i}`,
+      card: { type: "education", data: edu as any },
+    });
+  });
+
+  (data.certifications ?? []).forEach((cert, i) => {
+    if (!cert || !cert.title) return;
+    cards.push({
+      id: `certification-${i}`,
+      card: { type: "certification", data: cert as any },
+    });
+  });
+
+  return cards;
+}
+
+function cardSectionLabel(type: ImportCardPayload["type"]): string {
+  const map: Record<string, string> = {
+    contactInfo: "Contact Info",
+    summary: "Summary",
+    experience: "Experience",
+    education: "Education",
+    certification: "Certification",
+    skills: "Skills",
+  };
+  return map[type] ?? type;
+}
+
+function DetailRow({ label, value }: { label: string; value?: unknown }) {
+  // Streaming partials can momentarily emit a non-string (e.g. {}) for a field
+  // before it resolves — never hand a non-primitive to React.
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  if (value === "") return null;
+  return (
+    <div className="flex gap-2 text-xs">
+      <span className="text-muted-foreground w-20 shrink-0">{label}</span>
+      <span className="text-foreground break-words min-w-0">{value}</span>
+    </div>
+  );
+}
+
+function PendingCardDetail({ card }: { card: ImportCardPayload }) {
+  if (card.type === "contactInfo") {
+    const d = card.data;
+    const name = `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim();
+    return (
+      <div className="space-y-1 mt-1">
+        {name && <DetailRow label="Name" value={name} />}
+        <DetailRow label="Headline" value={d.headline} />
+        <DetailRow label="Email" value={d.email} />
+        <DetailRow label="Phone" value={d.phone} />
+        <DetailRow label="Address" value={d.address} />
+      </div>
+    );
+  }
+
+  if (card.type === "summary") {
+    return (
+      <p className="text-xs text-foreground mt-1 whitespace-pre-wrap">
+        {card.data}
+      </p>
+    );
+  }
+
+  if (card.type === "experience") {
+    const d = card.data;
+    const dates = [d.startDate, d.endDate].filter(Boolean).join(" – ");
+    return (
+      <div className="space-y-1 mt-1">
+        <DetailRow label="Title" value={d.jobTitle} />
+        <DetailRow label="Company" value={d.company} />
+        <DetailRow label="Location" value={d.location} />
+        {dates && <DetailRow label="Dates" value={dates} />}
+        {typeof d.description === "string" && d.description && (
+          <p className="text-xs text-foreground mt-1 whitespace-pre-wrap pl-[5.5rem]">
+            {d.description}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (card.type === "education") {
+    const d = card.data;
+    const dates = [d.startDate, d.endDate].filter(Boolean).join(" – ");
+    return (
+      <div className="space-y-1 mt-1">
+        <DetailRow label="Institution" value={d.institution} />
+        <DetailRow label="Degree" value={d.degree} />
+        <DetailRow label="Field" value={d.fieldOfStudy} />
+        <DetailRow label="Location" value={d.location} />
+        {dates && <DetailRow label="Dates" value={dates} />}
+        {typeof d.description === "string" && d.description && (
+          <p className="text-xs text-foreground mt-1 whitespace-pre-wrap pl-[5.5rem]">
+            {d.description}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (card.type === "certification") {
+    const d = card.data;
+    return (
+      <div className="space-y-1 mt-1">
+        <DetailRow label="Title" value={d.title} />
+        <DetailRow label="Issuer" value={d.organization} />
+        <DetailRow label="Issued" value={d.issueDate} />
+        <DetailRow label="Expires" value={d.expirationDate} />
+        <DetailRow label="URL" value={d.credentialUrl} />
+      </div>
+    );
+  }
+
+  if (card.type === "skills") {
+    const categories = card.data.categories ?? [];
+    return (
+      <div className="space-y-2 mt-1">
+        {categories.map((cat, i) => {
+          const skills = (cat.skills ?? []).filter(
+            (s): s is string => typeof s === "string" && !!s.trim(),
+          );
+          if (skills.length === 0) return null;
+          return (
+            <div key={i} className="space-y-1">
+              {typeof cat.label === "string" && cat.label && (
+                <span className="text-xs font-medium text-muted-foreground">
+                  {cat.label}
+                </span>
+              )}
+              <div className="flex flex-wrap gap-1">
+                {skills.map((skill, j) => (
+                  <Badge key={j} variant="secondary" className="text-xs">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// Individual pending card row
+function PendingCardRow({
+  pending,
+  onAccept,
+  onDiscard,
+  locked,
+}: {
+  pending: PendingCard;
+  onAccept: (id: string) => void;
+  onDiscard: (id: string) => void;
+  locked?: boolean;
+}) {
+  const [isSaving, startSaving] = useTransition();
+
+  return (
+    <div className="border border-dashed rounded-md px-4 py-3 bg-muted/30">
+      <div className="flex items-start justify-between gap-4">
+        <Badge variant="outline" className="text-xs shrink-0">
+          {cardSectionLabel(pending.card.type)}
+        </Badge>
+        <div className="flex items-center gap-1 shrink-0 ml-auto">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            disabled={isSaving || locked}
+            onClick={() =>
+              startSaving(async () => {
+                await onAccept(pending.id);
+              })
+            }
+          >
+            {isSaving ? (
+              <Loader className="h-3 w-3 spinner" />
+            ) : (
+              <Check className="h-3 w-3" />
+            )}
+            <span className="ml-1">Accept</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-xs text-muted-foreground"
+            disabled={isSaving || locked}
+            onClick={() => onDiscard(pending.id)}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+      <PendingCardDetail card={pending.card} />
+    </div>
+  );
+}
+
+function ResumeContainer({
+  resume,
+  defaultResumeId,
+}: {
+  resume: Resume;
+  defaultResumeId?: string | null;
+}) {
+  const router = useRouter();
+  const goBack = () => router.back();
+  const isDefault = !!resume?.id && resume.id === defaultResumeId;
+  const [setDefaultConfirmOpen, setSetDefaultConfirmOpen] = useState(false);
+  const [currentReviewData, setCurrentReviewData] = useState(
+    resume.reviewData,
+  );
+  const parsedReviewData = useMemo(() => {
+    if (!currentReviewData) return null;
+    try {
+      return JSON.parse(currentReviewData) as ResumeReviewData;
+    } catch {
+      return null;
+    }
+  }, [currentReviewData]);
+  const handleReviewSaved = useCallback((reviewData: string) => {
+    setCurrentReviewData(reviewData);
+  }, []);
+  const resumeSectionRef = useRef<AddResumeSectionRef>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [pendingPdf, setPendingPdf] = useState<{
+    blob: Blob;
+    filename: string;
+  } | null>(null);
+  const [showAttachConfirm, setShowAttachConfirm] = useState(false);
+  const [showDiscardImportConfirm, setShowDiscardImportConfirm] =
+    useState(false);
+
+  // Import review mode state
+  const [pendingCards, setPendingCards] = useState<PendingCard[]>([]);
+  const [importTruncated, setImportTruncated] = useState(false);
+  const [unrecognizedSections, setUnrecognizedSections] = useState<string[]>(
+    [],
+  );
+  const [importMode, setImportMode] = useState(false);
+
+  // AI availability for "Structure with AI" button
+  const [aiModel, setAiModel] = useState<AiModel>(defaultModel);
+  const [aiReady, setAiReady] = useState(false);
+  const [ollamaConnected, setOllamaConnected] = useState<boolean | null>(
+    null,
+  );
+  const [connectionError, setConnectionError] = useState<string>("");
+  // Plain boolean (not useTransition): streaming fires rapid state updates that
+  // must not run as interruptible transition renders.
+  const [isStructuring, setIsStructuring] = useState(false);
+  // Aborts the in-flight import fetch so the server stops the LLM generation
+  // when the user navigates away or the component unmounts.
+  const importAbortRef = useRef<AbortController | null>(null);
+  // Holds the model for an auto-import triggered from the create dialog so it
+  // survives a Strict Mode remount after the sessionStorage key is consumed.
+  const pendingAutoImportRef = useRef<AiModel | null>(null);
+
+  // Runs the import stream, rendering cards progressively as they arrive.
+  // The caller owns the AbortController so each invocation is independent —
+  // this keeps the callback stable and survives React Strict Mode's
+  // mount/unmount/remount of the auto-start effect (aborted run is discarded,
+  // the remounted run completes).
+  const runImport = useCallback(
+    async (model: AiModel, abortController: AbortController) => {
+      const resumeId = resume.id;
+      if (!resumeId) return;
+      setIsStructuring(true);
+      setImportMode(true);
+      importAbortRef.current = abortController;
+      try {
+        const { data, truncated } = await streamResumeImport({
+          resumeId,
+          selectedModel: model,
+          signal: abortController.signal,
+          onPartial: (partial) => {
+            if (abortController.signal.aborted) return;
+            const cards = buildPendingCards(partial);
+            if (cards.length > 0) setPendingCards(cards);
+          },
+        });
+
+        if (abortController.signal.aborted) return;
+        const cards = buildPendingCards(data);
+        if (cards.length === 0) {
+          setImportMode(false);
+          toast({
+            title: "No sections found",
+            description:
+              "No structured data could be extracted from the document.",
+          });
+          return;
+        }
+        setPendingCards(cards);
+        setImportTruncated(truncated);
+        setUnrecognizedSections(
+          filterUnrecognizedSections(data.unrecognizedSections ?? []),
+        );
+      } catch (error) {
+        // Client-initiated abort (unmount/navigation) — not a user-facing error.
+        if (abortController.signal.aborted) return;
+        setImportMode(false);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Failed to contact AI service.",
+        });
+      } finally {
+        if (importAbortRef.current === abortController) {
+          importAbortRef.current = null;
+        }
+        // Don't reset on an aborted run: a concurrent (remounted) run may be
+        // live and still structuring.
+        if (!abortController.signal.aborted) {
+          setIsStructuring(false);
+        }
+      }
+    },
+    [resume.id],
+  );
+
+  // Abort any in-flight import when the component unmounts.
+  useEffect(() => {
+    return () => importAbortRef.current?.abort();
+  }, []);
+
+  // Auto-start the import stream when arriving from the create dialog.
+  // The pending model is captured into a ref (not re-read from sessionStorage)
+  // so the request survives Strict Mode's remount even though the storage key
+  // is consumed on first read. Each run owns its controller and aborts only
+  // that controller on cleanup — the canonical mount/abort pattern.
+  useEffect(() => {
+    if (!resume.id) return;
+    const key = `import-pending:${resume.id}`;
+    const stored = sessionStorage.getItem(key);
+    if (stored) {
+      sessionStorage.removeItem(key);
+      try {
+        pendingAutoImportRef.current = (
+          JSON.parse(stored) as { selectedModel: AiModel }
+        ).selectedModel;
+      } catch {
+        // Malformed sessionStorage entry — ignore
+      }
+    }
+    const model = pendingAutoImportRef.current;
+    if (!model) return;
+    const controller = new AbortController();
+    runImport(model, controller);
+    return () => controller.abort();
+  }, [resume.id, runImport]);
+
+  // Tab-close guard while pending cards exist
+  useEffect(() => {
+    if (pendingCards.length === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [pendingCards.length]);
+
+  // Load AI settings for "Structure with AI" button
+  useEffect(() => {
+    if (resume.File?.filePath && !importMode) {
+      getUserSettings().then((result) => {
+        if (result.success && result.data?.settings?.ai) {
+          const ai = result.data.settings.ai;
+          const model: AiModel = {
+            provider: ai.provider || defaultModel.provider,
+            model: ai.model,
+          };
+          setAiModel(model);
+          setAiReady(true);
+          if (model.provider === "ollama") {
+            setOllamaConnected(null);
+            setConnectionError("");
+            checkOllamaConnection(model.provider).then((result) => {
+              setOllamaConnected(result.isConnected);
+              if (!result.isConnected) {
+                setConnectionError(
+                  result.error || "Ollama is not reachable.",
+                );
+              }
+            });
+          }
+        }
+      });
+    }
+  }, [resume.File?.filePath, importMode]);
+
+  const handleAcceptCard = useCallback(
+    async (cardId: string) => {
+      const pending = pendingCards.find((c) => c.id === cardId);
+      if (!pending || !resume.id) return;
+      const result = await resolveImportCard(resume.id, pending.card);
+      if (result.success) {
+        setPendingCards((prev) => prev.filter((c) => c.id !== cardId));
+        router.refresh();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.message,
+        });
+      }
+    },
+    [pendingCards, resume.id, router],
+  );
+
+  const handleDiscardCard = useCallback((cardId: string) => {
+    setPendingCards((prev) => prev.filter((c) => c.id !== cardId));
+  }, []);
+
+  const handleDiscardImport = async () => {
+    if (!resume.id) return;
+    importAbortRef.current?.abort();
+    const result = await deleteResumeById(resume.id);
+    if (result?.success) {
+      router.push("/dashboard/profile");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result?.message,
+      });
+    }
+  };
+
+  const handleStructureWithAI = () => runImport(aiModel, new AbortController());
+
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const uploadPdfAsAttachment = async (
+    blob: Blob,
+    filename: string,
+    replaceExisting: boolean,
+  ) => {
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new File([blob], filename, { type: "application/pdf" }),
+    );
+    formData.append("title", resume.title);
+    formData.append("id", resume.id!);
+    if (replaceExisting && resume.FileId) {
+      formData.append("fileId", resume.FileId);
+    }
+    const res = await fetch("/api/profile/resume", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    router.refresh();
+  };
+
+  const handleExportPdf = async (layout: ResumeLayout) => {
+    const hasName =
+      resume.ContactInfo?.firstName?.trim() ||
+      resume.ContactInfo?.lastName?.trim();
+    const hasSections = resume.ResumeSections?.some(
+      (s) =>
+        s.summary?.content ||
+        s.workExperiences?.length ||
+        s.educations?.length ||
+        s.licenseOrCertifications?.length ||
+        s.skills?.length,
+    );
+    if (!hasName && !hasSections) {
+      toast({
+        title: "Nothing to export",
+        description:
+          "Add your contact info and at least one section (Summary, Experience, or Education) before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const { generateResumePdfBlob } = await import("./resume-pdf");
+      const { blob, filename } = await generateResumePdfBlob(resume, layout);
+
+      if (!resume.FileId) {
+        triggerDownload(blob, filename);
+        await uploadPdfAsAttachment(blob, filename, false);
+        toast({
+          title: "PDF exported",
+          description: "Saved to Downloads and attached to this resume.",
+        });
+      } else {
+        setPendingPdf({ blob, filename });
+        setShowAttachConfirm(true);
+      }
+    } catch {
+      toast({
+        title: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleAttachChoice = async (choice: "replace" | "download-only") => {
+    if (!pendingPdf) return;
+    setShowAttachConfirm(false);
+    setIsExporting(true);
+    try {
+      const { blob, filename } = pendingPdf;
+      triggerDownload(blob, filename);
+      if (choice === "replace") {
+        await uploadPdfAsAttachment(blob, filename, true);
+        toast({
+          title: "PDF exported",
+          description: "Saved to Downloads and attachment replaced.",
+        });
+      } else {
+        toast({
+          title: "PDF exported",
+          description: "Saved to your Downloads folder.",
+        });
+      }
+    } catch {
+      toast({
+        title: "Failed to upload PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+      setPendingPdf(null);
+    }
+  };
+
+  const { title, ContactInfo, ResumeSections } = resume ?? {};
+  const summarySection = ResumeSections?.find(
+    (s) => s.sectionType === SectionType.SUMMARY,
+  );
+  const experienceSection = ResumeSections?.find(
+    (s) => s.sectionType === SectionType.EXPERIENCE,
+  );
+  const educationSection = ResumeSections?.find(
+    (s) => s.sectionType === SectionType.EDUCATION,
+  );
+  const certificationSection = ResumeSections?.find(
+    (s) => s.sectionType === SectionType.CERTIFICATION,
+  );
+  const skillsSection = ResumeSections?.find(
+    (s) => s.sectionType === SectionType.SKILLS,
+  );
+
+  const openContactInfoDialog = () =>
+    resumeSectionRef.current?.openContactInfoDialog(ContactInfo!);
+  const openSummaryDialogForEdit = () =>
+    resumeSectionRef.current?.openSummaryDialog(summarySection!);
+  const openExperienceDialogForEdit = (experienceId: string) => {
+    const section: ResumeSection = {
+      ...experienceSection!,
+      workExperiences: experienceSection?.workExperiences?.filter(
+        (exp) => exp.id === experienceId,
+      ),
+    };
+    resumeSectionRef.current?.openExperienceDialog(section);
+  };
+  const openEducationDialogForEdit = (educationId: string) => {
+    const section: ResumeSection = {
+      ...educationSection!,
+      educations: educationSection?.educations?.filter(
+        (edu) => edu.id === educationId,
+      ),
+    };
+    resumeSectionRef.current?.openEducationDialog(section);
+  };
+  const openSkillsDialogForEdit = () => {
+    resumeSectionRef.current?.openSkillsDialog(skillsSection!);
+  };
+  const handleDeleteSkillsSection = async () => {
+    if (!skillsSection?.id) return;
+    const result = await deleteSkillsSection(skillsSection.id);
+    if (!result.success) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.message,
+      });
+    } else {
+      router.refresh();
+    }
+  };
+
+  const openCertificationDialogForEdit = (certificationId: string) => {
+    const section: ResumeSection = {
+      ...certificationSection!,
+      licenseOrCertifications:
+        certificationSection?.licenseOrCertifications?.filter(
+          (cert) => cert.id === certificationId,
+        ),
+    };
+    resumeSectionRef.current?.openCertificationDialog(section);
+  };
+
+  const isEmptyResume =
+    !ContactInfo && (!ResumeSections || ResumeSections.length === 0);
+  const showStructureWithAI =
+    isEmptyResume && !!resume.File?.filePath && aiReady && !importMode;
+
+  const handleSetDefault = async () => {
+    if (!resume?.id) return;
+    const { success, message } = await setDefaultResume(resume.id);
+    if (success) {
+      toast({
+        variant: "success",
+        description: "This resume is now your default.",
+      });
+      router.refresh();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: message,
+      });
+    }
+  };
+
+  return (
+    <>
+      <div className="flex justify-between">
+        <Button title="Go Back" size="sm" variant="outline" onClick={goBack}>
+          <ArrowLeft />
+        </Button>
+      </div>
+      <Card>
+        <CardHeader className="flex-col gap-2 sm:flex-row sm:justify-between sm:items-center lg:grid lg:grid-cols-3 lg:items-center">
+          <div className="flex items-center gap-2">
+            <CardTitle>Resume</CardTitle>
+            {isDefault && (
+              <Badge className="border-transparent bg-green-600 text-white hover:bg-green-600/90">
+                Default
+              </Badge>
+            )}
+          </div>
+          <CardDescription className="mt-0 lg:flex lg:justify-center">
+            {resume.FileId && resume.File?.filePath
+              ? DownloadFileButton(
+                  resume.File?.filePath,
+                  title,
+                  resume.File?.fileName,
+                )
+              : title}
+          </CardDescription>
+          <div className="flex items-center gap-2 flex-wrap lg:justify-end">
+            <AddResumeSection resume={resume} ref={resumeSectionRef} />
+            <AiResumeReviewSection
+              resume={resume}
+              onReviewSaved={handleReviewSaved}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger
+                    className="cursor-pointer"
+                    disabled={isExporting}
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    {isExporting ? "Generating…" : "Export to PDF"}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => handleExportPdf("simple")}
+                      disabled={isExporting}
+                    >
+                      Simple
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => handleExportPdf("professional")}
+                      disabled={isExporting}
+                    >
+                      Professional
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                {!isDefault && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (!hasMinResumeSections(ResumeSections?.length)) {
+                        warnInsufficientResumeSections(
+                          "setting this resume as default",
+                        );
+                        return;
+                      }
+                      setSetDefaultConfirmOpen(true);
+                    }}
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Set as default
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <DeleteAlertDialog
+        pageTitle="resume"
+        open={setDefaultConfirmOpen}
+        onOpenChange={setSetDefaultConfirmOpen}
+        onDelete={handleSetDefault}
+        alertTitle="Change default resume?"
+        alertDescription="This will make this resume your default, replacing any current default."
+        actionLabel="Set as default"
+        actionVariant="default"
+      />
+
+      {parsedReviewData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4" />
+              AI Review
+            </CardTitle>
+            <ReviewDetails reviewData={parsedReviewData} />
+          </CardHeader>
+        </Card>
+      )}
+
+      {/* IMPORT REVIEW BANNER */}
+      {importMode && (pendingCards.length > 0 || isStructuring) && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  {isStructuring ? (
+                    <>
+                      <Loader className="h-4 w-4 text-blue-500 animate-spin" />
+                      Structuring your document… you can review and accept items
+                      once it finishes.
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 text-blue-500" />
+                      We pre-filled this from your document. Review each item
+                      and accept the ones you want.
+                      {importTruncated &&
+                        " Only the first 5 pages were imported."}
+                    </>
+                  )}
+                </p>
+                {unrecognizedSections.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Some sections couldn&apos;t be imported (
+                    {unrecognizedSections.join(", ")}) — the resume model
+                    doesn&apos;t support these yet.
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => setShowDiscardImportConfirm(true)}
+              >
+                Discard import
+              </Button>
+            </div>
+            <div className="mt-3 space-y-2">
+              {pendingCards.map((pending) => (
+                <PendingCardRow
+                  key={pending.id}
+                  pending={pending}
+                  onAccept={handleAcceptCard}
+                  onDiscard={handleDiscardCard}
+                  locked={isStructuring}
+                />
+              ))}
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+
+      {/* STRUCTURE WITH AI BUTTON (empty imported resume, AI available) */}
+      {showStructureWithAI && (
+        <Card className="border-dashed">
+          <ResponsiveCardHeader>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                A file is attached. Structure it into sections using AI.
+              </p>
+              {aiModel.provider === "ollama" &&
+                ollamaConnected === false &&
+                connectionError && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {connectionError}
+                  </p>
+                )}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={
+                isStructuring ||
+                (aiModel.provider === "ollama" && ollamaConnected === false)
+              }
+              onClick={handleStructureWithAI}
+            >
+              {isStructuring ? (
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              {isStructuring ? "Structuring…" : "Structure with AI"}
+            </Button>
+          </ResponsiveCardHeader>
+        </Card>
+      )}
+
+      {/* SAVED SECTIONS */}
+      {ContactInfo && (
+        <ContactInfoCard
+          contactInfo={ContactInfo}
+          openDialog={openContactInfoDialog}
+        />
+      )}
+      {summarySection && (
+        <SummarySectionCard
+          summarySection={summarySection}
+          openDialogForEdit={openSummaryDialogForEdit}
+        />
+      )}
+      {skillsSection && (
+        <SkillsSectionCard
+          skillsSection={skillsSection}
+          openDialogForEdit={openSkillsDialogForEdit}
+          onDelete={handleDeleteSkillsSection}
+        />
+      )}
+      {experienceSection && (
+        <ExperienceCard
+          experienceSection={experienceSection}
+          openDialogForEdit={openExperienceDialogForEdit}
+        />
+      )}
+      {educationSection && (
+        <EducationCard
+          educationSection={educationSection}
+          openDialogForEdit={openEducationDialogForEdit}
+        />
+      )}
+      {certificationSection && (
+        <CertificationCard
+          certificationSection={certificationSection}
+          openDialogForEdit={openCertificationDialogForEdit}
+        />
+      )}
+
+      {/* PDF ATTACHMENT CONFIRM */}
+      <AlertDialog open={showAttachConfirm} onOpenChange={setShowAttachConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace existing attachment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This resume already has a file attached. Would you like to replace
+              it with the exported PDF?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowAttachConfirm(false);
+                setPendingPdf(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => handleAttachChoice("download-only")}
+            >
+              Download only
+            </Button>
+            <AlertDialogAction onClick={() => handleAttachChoice("replace")}>
+              Replace attachment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* DISCARD IMPORT CONFIRM */}
+      <AlertDialog
+        open={showDiscardImportConfirm}
+        onOpenChange={setShowDiscardImportConfirm}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard import?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete this resume and its attached file. Unsaved
+              suggestions will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDiscardImport}
+            >
+              Discard import
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+export default ResumeContainer;

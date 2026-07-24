@@ -2,13 +2,25 @@
 node_modules/
 dist/
 
-# runtime output(生成的简历/PDF/数据,不进库)
-output/
-data/
+# runtime output(生成的简历/PDF/数据,不进库;锚定根目录,避免误伤 apps/web/src/lib/data/)
+/output/
+/data/
 
 # secrets
 .env
 .env.local
+.mcp.json
+!.mcp.json.example
+
+# 候选人画像(含个人偏好,不进库;example 可提交)
+profile/candidate.yaml
+
+# apps/web (vendored jobsync) 产物
+apps/web/.next/
+apps/web/dev.db*
+apps/web/prisma/dev.db*
+apps/web/.env*
+!apps/web/.env.example
 
 # os / editor
 .DS_Store

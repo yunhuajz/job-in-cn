@@ -1,0 +1,23 @@
+{
+  "name": "job-for-claude",
+  "version": "0.1.0",
+  "private": true,
+  "description": "以 Claude Code 为中心的个人 AI 求职系统(Boss 直聘优先)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,265 @@
+# JobSync - Job Search Assistant
+
+## <a href="https://demo.jobsync.ca">Live Demo</a>
+
+JobSync is a web app companion for managing your job search journey. This free and open-source project is designed to help job seekers efficiently track and organize their job applications. Say goodbye to the chaos of scattered information and hello to a streamlined, intuitive, and powerful job search experience running locally on your system.
+
+Job searching can be overwhelming, with numerous applications to track and deadlines to meet. JobSeeker Assistant is here to simplify this process, allowing you to focus on big picture and keep track of your job search related activities. JobSync app platform empowers you with the tools you need to stay organized, informed, and proactive throughout your job search.
+
+### Dashboard
+
+![App Snapshot](./screenshots/jobsync-dashboard-screenshot.png?raw=true "App Snapshot Image")
+
+### Jobs Applied list
+
+![App Snapshot](./screenshots/jobsync-myjobs.png?raw=true "My Jobs Page Snapshot Image")
+
+### AI Resume review
+
+![JobSync AI Demo](./screenshots/jobsync-ai.gif)
+
+### AI Job match
+
+![JobSync AI Demo](./screenshots/jobsync-ai-jobmatch.gif)
+
+## Key Features
+- **Application Tracker:** Keep a detailed record of all your job applications, including company details, job titles, application dates, and current status.
+
+- **Monitoring Dashboard:** Visualize your job search progress with an interactive dashboard that provides insights into your application activities, success rates, and upcoming tasks.
+
+- **Resume Management:** Store and manage your resumes, export them as professionally formatted PDFs (Simple or Professional template), and use them with AI to get reviews and match with job descriptions. Import existing resumes from PDF or Word (.docx) files — AI extracts and structures your contact info, experience, education, and certifications so you can review and save each section individually.
+
+- **Automated Job Discovery:** Schedule and run automations that track companies directly via the Greenhouse and Lever job board APIs, then AI-match each listing against your resume and surface the best fits for review. More job board sources coming soon.
+
+- **Task & Activity Management:** Manage tasks, track activites linked with tasks included with time tracking. 
+
+- **AI Assistant:** Leverage the power of AI to improve your resumes and match with jobs. Get personalized job matching with scoring to identify the best opportunities tailored to your profile.
+
+- **AI Agent Integration (MCP):** Connect AI agents like Claude Desktop via a built-in MCP server to add job applications and Question Bank entries directly from your chat, with your approval. When a job description is substantial enough, the agent can also analyze it against your default resume and save a job match score right from the chat.
+
+
+## Free to Use and Self-Hosted
+JobSync Assistant is completely free to use and open source. It provides a powerful job search management tool at no cost and ensures that everyone has access to the resources they need. Additionally, JobSeeker Assistant is designed to be self-hosted, giving you full control over your data. By using Docker, you can easily set up and run JobSync Assistant on your own server, ensuring a secure and personalized experience.
+
+
+## Quick Start
+
+Make sure [Docker](https://www.docker.com) is installed and running, then:
+
+```sh
+git clone https://github.com/Gsync/jobsync.git
+cd jobsync
+docker compose up
+```
+
+> **Note:** If app is unreachable after container starts, wait for a few minutes before accessing the app in browser.
+
+Open [http://localhost:3737](http://localhost:3737) and create your account. That's it!
+
+API keys for AI providers can be configured in **Settings** after signing in.
+
+### Configuration (Optional)
+
+Environment variables can be set in `docker-compose.yml`:
+
+| Variable | Description |
+|---|---|
+| `TZ` | Your timezone (e.g. `America/Edmonton`). **Set this on remote servers** to avoid activity time shifts. |
+| `AUTH_SECRET` | Auto-generated if not set. To set manually: `openssl rand -base64 32` |
+
+### Updating
+
+From the project directory, run the deploy script to pull the latest changes and rebuild:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Gsync/jobsync/main/deploy.sh | sudo bash -s
+```
+
+On **Windows**, run the PowerShell equivalent from the project directory instead (`deploy.sh` needs WSL or Git Bash; `deploy.ps1` runs natively):
+
+```powershell
+.\deploy.ps1
+```
+
+>Note: If you are updating in a homelab environment, edit `NEXTAUTH_URL` in your `.env` file to use your server IP address instead of `localhost`. See `.env.example` for the expected format.
+
+## Features in Detail
+
+### PDF Resume Export
+
+Export any resume as a professionally formatted PDF directly from the resume page. Choose between two layouts — a clean **Simple** template and a more polished **Professional** template. If a PDF attachment already exists, you'll be prompted to replace it or keep the download only.
+
+### Resume Import
+
+Import an existing resume from a PDF or Word (.docx) file. AI extracts structured data — contact info, summary, skills, work experience, education, and certifications — and presents each section as a review card. You can accept or skip individual sections before saving them to your resume.
+
+### Automated Job Discovery
+
+Set up automations that search for new jobs on a schedule and AI-match them against your resume, so relevant openings come to you.
+
+- **Greenhouse** — track specific companies by name from a built-in directory (or by pasting a board URL). Each run pulls every published role from those companies' Greenhouse boards, ranks them against your target titles, skills, and resume with a fast local relevance score, and runs the AI match on only the top candidates to keep costs bounded. No API key required.
+
+- **Lever** — same company-tracking workflow as Greenhouse, backed by a built-in directory of 1,160+ companies (or paste a board URL). Automatically resolves the right regional API (`lever.co` or `eu.lever.co`) per company and carries full remote/hybrid/onsite signal from the listing. No API key required.
+
+More job board sources are on the way. Discovered jobs are surfaced for review — accept the ones you like to promote them into your job tracker, or dismiss the rest.
+
+### MCP Server (AI Agent Integration)
+
+JobSync exposes an MCP server so AI agents (Claude Desktop, Hermes, OpenClaw, etc.) can add job applications and Question Bank entries directly, with your approval.
+
+#### Use Case
+
+Browsing a job posting or reading an interview question elsewhere and don't want to break your flow to log it manually? Just ask your connected AI agent, for example:
+
+- *"Add this job to JobSync (copy/paste the complete job details or try providing a link): Senior Backend Engineer at Acme Corp, JobType, location, Job description... "*
+- *"I just got asked this in an interview — add it to my Question Bank: 'How would you design a rate limiter?' with my answer: ..."*
+
+The agent resolves or creates the company, title, location, and tags by name, and reports back what it matched versus created — so your data stays de-duplicated without you having to switch to the app.
+
+When you add a job with a substantial description and you've set a **default resume** (Profile), the agent also analyzes the fit against that resume and saves a job match score — no round trip to the app needed. The result shows up on the job just like an in-app AI match, scores, recommendation, and write-up included.
+
+#### 1. Generate a token
+
+1. Sign in to JobSync and go to **Settings > MCP Access**.
+2. Click **Generate**, give it a name (e.g. the client you'll connect, like "Claude Desktop"), and pick an expiry.
+3. Copy the token and config snippets shown — the full token is only displayed once.
+
+#### 2. Add it to your MCP client
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+1. Open Claude Desktop → **Settings > Developer > Edit Config**. This opens `claude_desktop_config.json` in your default editor.
+2. Paste the "Claude Desktop (via mcp-remote)" snippet from the reveal dialog into `mcpServers`, e.g.:
+
+```json
+{
+  "mcpServers": {
+    "jobsync": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://<your-jobsync-url>/api/mcp",
+        "--header",
+        "Authorization: Bearer <your-token>"
+      ]
+    }
+  }
+}
+```
+
+3. Save and fully restart Claude Desktop (quit, not just close the window).
+
+> **Note:** Claude Desktop only supports local (stdio) MCP servers directly, so `mcp-remote` is required as a bridge to JobSync's remote endpoint.
+
+</details>
+
+<details>
+<summary><strong>Other clients (OpenClaw, Hermes, etc.)</strong></summary>
+
+Clients that support `streamable-http` natively can connect directly without `mcp-remote`:
+
+```json
+{
+  "mcpServers": {
+    "jobsync": {
+      "type": "streamable-http",
+      "url": "http://<your-jobsync-url>/api/mcp",
+      "headers": { "Authorization": "Bearer <your-token>" }
+    }
+  }
+}
+```
+
+</details>
+
+> **Self-hosting on a home network?** If your JobSync URL is a plain `http://` LAN address (not `localhost` or HTTPS), add `--allow-http` to the `mcp-remote` args — it refuses non-HTTPS URLs by default. The Settings page adds this flag automatically when it detects a non-localhost HTTP URL.
+
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guidelines](./CONTRIBUTING.md) to get started. This project follows a [Code of Conduct](./CODE_OF_CONDUCT.md) — by participating, you agree to uphold its standards.
+
+### Credits
+
+- <a href="https://github.com/facebook/react">React</a>
+- <a href="https://github.com/vercel/next.js">Next</a>
+- <a href="https://github.com/shadcn-ui/ui">Shadcn</a>
+- <a href="https://github.com/prisma/prisma">Prisma</a>
+- <a href="https://github.com/tailwindlabs/tailwindcss">Tailwind</a>
+- <a href="https://github.com/ueberdosis/tiptap">Tiptap</a>
+- <a href="https://github.com/plouc/nivo">Nivo</a>
+- <a href="https://github.com/sqlite/sqlite">Sqlite</a>
+- <a href="https://github.com/vercel/ai">Vercel AI-SDK</a>
+- <a href="https://github.com/ollama/ollama">Ollama</a>
+
+### Supported AI Model Providers
+
+API keys for all cloud providers can be configured in **Settings > AI Settings** after signing in. Ollama is selected as the default provider.
+
+> **Note:** Selected models must support **structured output** for AI features to work correctly.
+
+<details>
+<summary><strong>Ollama (Local)</strong></summary>
+
+Works with [Ollama](https://ollama.com) to run AI models locally on your machine.
+
+- Make sure Ollama is installed and running on the same system
+- AI settings will show a list of available models based on what you have downloaded in Ollama
+- **Recommended:** Increase the Ollama context length from the default 4k for better results
+- No API key required — runs entirely on your hardware
+- If you are running jobsync on a homelab server, you can expose ollama to network from Ollama settings on your local machine. Also make sure your ollama base url is pointed to your local system IP under API keys section of settings.
+
+</details>
+
+<details>
+<summary><strong>OpenAI</strong></summary>
+
+- Get your API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- Add your API key in **Settings > AI Settings**
+- Select **OpenAI** as the provider and choose your preferred model
+- Available models are fetched dynamically from the OpenAI API
+
+</details>
+
+<details>
+<summary><strong>DeepSeek</strong></summary>
+
+- Get your API key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+- Add your API key in **Settings > AI Settings**
+- Select **DeepSeek** as the provider and choose your preferred model
+
+</details>
+
+<details>
+<summary><strong>Google Gemini</strong></summary>
+
+- Get your API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- Add your API key in **Settings > AI Settings**
+- Select **Gemini** as the provider and choose your preferred model
+
+</details>
+
+<details>
+<summary><strong>OpenRouter</strong></summary>
+
+Access a wide range of AI models from multiple providers through a single API.
+
+- Get your API key at [openrouter.ai/keys](https://openrouter.ai/keys)
+- Add your API key in **Settings > AI Settings**
+- Select **OpenRouter** as the provider and choose from available models
+
+</details>
+
+### Note
+
+- If you are updating from an old version and already logged in, please try logging out and login again.
+
+## Support the Project
+
+If JobSync has been helpful in your job search, consider giving it a star on GitHub! It helps others discover the project and motivates continued development.
+
+[![GitHub Stars](https://img.shields.io/github/stars/Gsync/jobsync?style=social)](https://github.com/Gsync/jobsync)
+
+Every star means a lot — thank you for your support!
+

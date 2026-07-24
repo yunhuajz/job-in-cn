@@ -1,0 +1,93 @@
+import { StyleSheet } from "@react-pdf/renderer";
+import { HtmlStyleSet } from "../types";
+
+export const simpleStyles = StyleSheet.create({
+  page: {
+    fontFamily: "Helvetica",
+    fontSize: 11,
+    paddingTop: 40,
+    paddingBottom: 40,
+    paddingHorizontal: 48,
+    color: "#000000",
+    lineHeight: 1.4,
+  },
+  heading: {
+    fontSize: 20,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 8,
+  },
+  subheading: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  contactLine: {
+    fontSize: 10,
+    color: "#444444",
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 3,
+    marginTop: 6,
+  },
+  divider: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#000000",
+    marginBottom: 6,
+  },
+  bold: { fontFamily: "Helvetica-Bold" },
+  italic: { fontFamily: "Helvetica-Oblique" },
+  boldItalic: { fontFamily: "Helvetica-BoldOblique" },
+  bodyText: { fontSize: 11, marginBottom: 2 },
+  entryTitle: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    marginBottom: 1,
+  },
+  entryMeta: {
+    fontSize: 10,
+    color: "#444444",
+    marginBottom: 2,
+  },
+  listRow: {
+    flexDirection: "row",
+    marginBottom: 1,
+  },
+  bullet: { width: 14, fontSize: 11 },
+  listText: { flex: 1, fontSize: 11 },
+  h2text: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 13,
+    marginBottom: 3,
+    marginTop: 4,
+  },
+  skillRow: {
+    flexDirection: "row",
+    marginBottom: 3,
+  },
+  skillCat: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    width: 110,
+    flexShrink: 0,
+  },
+  skillVals: {
+    flex: 1,
+    fontSize: 11,
+  },
+});
+
+export const simpleHtmlStyles: HtmlStyleSet = {
+  bodyText: simpleStyles.bodyText,
+  bold: simpleStyles.bold,
+  italic: simpleStyles.italic,
+  boldItalic: simpleStyles.boldItalic,
+  h2text: simpleStyles.h2text,
+  listRow: simpleStyles.listRow,
+  bullet: simpleStyles.bullet,
+  listText: simpleStyles.listText,
+  bulletChar: "•",
+};

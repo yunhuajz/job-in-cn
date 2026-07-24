@@ -1,0 +1,539 @@
+"use server";
+import prisma from "@/lib/db";
+import { handleError } from "@/lib/utils";
+import { AddJobFormSchema } from "@/models/addJobForm.schema";
+import { JOB_TYPES, JobStatus } from "@/models/job.model";
+import { getCurrentUser } from "@/utils/user.utils";
+import { APP_CONSTANTS } from "@/lib/constants";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+export const getStatusList = async (): Promise<any | undefined> => {
+  try {
+    const statuses = await prisma.jobStatus.findMany();
+    return statuses;
+  } catch (error) {
+    const msg = "Failed to fetch status list. ";
+    return handleError(error, msg);
+  }
+};
+
+export const getJobSourceList = async (): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+    const list = await prisma.jobSource.findMany({
+      where: {
+        createdBy: user.id,
+      },
+    });
+    return list;
+  } catch (error) {
+    const msg = "Failed to fetch job source list. ";
+    return handleError(error, msg);
+  }
+};
+
+export const getJobsList = async (
+  page: number = 1,
+  limit: number = APP_CONSTANTS.RECORDS_PER_PAGE,
+  filter?: string,
+  search?: string,
+  companyValue?: string,
+  appliedOnly?: boolean,
+  titleValue?: string,
+  locationValue?: string,
+  sourceValue?: string,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+    const skip = (page - 1) * limit;
+
+    const filterBy = filter
+      ? filter === Object.keys(JOB_TYPES)[1]
+        ? {
+            jobType: filter,
+          }
+        : filter === "accepted" || filter === "dismissed"
+          ? {
+              discoveryStatus: filter,
+            }
+          : {
+              Status: {
+                value: filter,
+              },
+            }
+      : {};
+
+    const whereClause: any = {
+      userId: user.id,
+      ...filterBy,
+    };
+
+    // Dismissed discovered jobs are kept only for dedup and shouldn't
+    // clutter the tracked jobs list unless explicitly filtered for.
+    if (filter !== "dismissed") {
+      whereClause.AND = [
+        {
+          OR: [{ discoveryStatus: null }, { discoveryStatus: { not: "dismissed" } }],
+        },
+      ];
+    }
+
+    if (companyValue) {
+      whereClause.Company = { value: companyValue };
+    }
+
+    if (titleValue) {
+      whereClause.JobTitle = { value: titleValue };
+    }
+
+    if (locationValue) {
+      whereClause.Location = { value: locationValue };
+    }
+
+    if (sourceValue) {
+      whereClause.JobSource = { value: sourceValue };
+    }
+
+    if (appliedOnly) {
+      whereClause.applied = true;
+    }
+
+    if (search) {
+      const searchConditions: Record<string, any>[] = [];
+      if (!titleValue) {
+        searchConditions.push({ JobTitle: { label: { contains: search } } });
+      }
+      if (!companyValue) {
+        searchConditions.push({ Company: { label: { contains: search } } });
+      }
+      if (!locationValue) {
+        searchConditions.push({ Location: { label: { contains: search } } });
+      }
+      searchConditions.push(
+        { description: { contains: search } },
+      );
+      whereClause.OR = searchConditions;
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.job.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          JobSource: true,
+          JobTitle: true,
+          jobType: true,
+          workplaceType: true,
+          Company: true,
+          Status: true,
+          Location: true,
+          dueDate: true,
+          appliedDate: true,
+          description: false,
+          Resume: true,
+          CoverLetter: true,
+          matchScore: true,
+          discoveryStatus: true,
+          _count: { select: { Notes: true } },
+        },
+        orderBy: {
+          createdAt: "desc",
+          // appliedDate: "desc",
+        },
+      }),
+      prisma.job.count({
+        where: whereClause,
+      }),
+    ]);
+    return { success: true, data, total };
+  } catch (error) {
+    const msg = "Failed to fetch jobs list. ";
+    return handleError(error, msg);
+  }
+};
+
+export async function* getJobsIterator(filter?: string, pageSize = 200) {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+  let page = 1;
+  let fetchedCount = 0;
+
+  while (true) {
+    const skip = (page - 1) * pageSize;
+    const filterBy = filter
+      ? filter === Object.keys(JOB_TYPES)[1]
+        ? { status: filter }
+        : { type: filter }
+      : {};
+
+    const chunk = await prisma.job.findMany({
+      where: {
+        userId: user.id,
+        ...filterBy,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        JobSource: true,
+        JobTitle: true,
+        jobType: true,
+        workplaceType: true,
+        Company: true,
+        Status: true,
+        Location: true,
+        dueDate: true,
+        applied: true,
+        appliedDate: true,
+      },
+      skip,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!chunk.length) {
+      break;
+    }
+
+    yield chunk;
+    fetchedCount += chunk.length;
+    page++;
+  }
+}
+
+export const getJobDetails = async (
+  jobId: string,
+): Promise<any | undefined> => {
+  try {
+    if (!jobId) {
+      throw new Error("Please provide job id");
+    }
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const job = await prisma.job.findUnique({
+      where: {
+        id: jobId,
+        userId: user.id,
+      },
+      include: {
+        JobSource: true,
+        JobTitle: true,
+        Company: true,
+        Status: true,
+        Location: true,
+        Resume: {
+          include: {
+            File: true,
+          },
+        },
+        CoverLetter: true,
+        tags: true,
+      },
+    });
+    return { job, success: true };
+  } catch (error) {
+    const msg = "Failed to fetch job details. ";
+    return handleError(error, msg);
+  }
+};
+
+export const createLocation = async (
+  label: string,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const value = label.trim().toLowerCase();
+
+    if (!value) {
+      throw new Error("Please provide location name");
+    }
+
+    const existing = await prisma.location.findFirst({
+      where: { value, createdBy: user.id },
+    });
+    if (existing) {
+      return { data: existing, success: true };
+    }
+
+    const location = await prisma.location.create({
+      data: { label, value, createdBy: user.id },
+    });
+
+    return { data: location, success: true };
+  } catch (error) {
+    const msg = "Failed to create job location. ";
+    return handleError(error, msg);
+  }
+};
+
+export const createJobSource = async (
+  label: string,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const value = label.trim().toLowerCase();
+
+    if (!value) {
+      throw new Error("Please provide job source name");
+    }
+
+    const existing = await prisma.jobSource.findFirst({
+      where: { value, createdBy: user.id },
+    });
+    if (existing) {
+      return { data: existing, success: true };
+    }
+
+    const jobSource = await prisma.jobSource.create({
+      data: { label, value, createdBy: user.id },
+    });
+
+    return { data: jobSource, success: true };
+  } catch (error) {
+    const msg = "Failed to create job source. ";
+    return handleError(error, msg);
+  }
+};
+
+import { createJobRecord } from "@/lib/jobs/createJobRecord";
+
+export const addJob = async (
+  data: z.infer<typeof AddJobFormSchema>,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const {
+      title,
+      company,
+      location,
+      type,
+      workplaceType,
+      status,
+      source,
+      salaryRange,
+      dueDate,
+      dateApplied,
+      jobDescription,
+      jobUrl,
+      applied,
+      resume,
+      coverLetter,
+      tags,
+    } = data;
+
+    const job = await createJobRecord({
+      jobTitleId: title,
+      companyId: company,
+      locationId: location,
+      statusId: status,
+      jobSourceId: source,
+      salaryRange,
+      dueDate,
+      appliedDate: dateApplied,
+      description: jobDescription,
+      jobType: type,
+      workplaceType,
+      userId: user.id,
+      jobUrl,
+      applied,
+      resumeId: resume,
+      coverLetterId: coverLetter,
+      tagIds: tags ?? [],
+    });
+    revalidatePath("/dashboard");
+    return { job, success: true };
+  } catch (error) {
+    const msg = "Failed to create job. ";
+    return handleError(error, msg);
+  }
+};
+
+export const updateJob = async (
+  data: z.infer<typeof AddJobFormSchema>,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+    if (!data.id) {
+      throw new Error("Job id is required");
+    }
+
+    const {
+      id,
+      title,
+      company,
+      location,
+      type,
+      workplaceType,
+      status,
+      source,
+      salaryRange,
+      dueDate,
+      dateApplied,
+      jobDescription,
+      jobUrl,
+      applied,
+      resume,
+      coverLetter,
+      tags,
+    } = data;
+
+    const tagIds = tags ?? [];
+
+    const job = await prisma.job.update({
+      where: {
+        id,
+        userId: user.id,
+      },
+      data: {
+        jobTitleId: title,
+        companyId: company,
+        locationId: location,
+        statusId: status,
+        jobSourceId: source,
+        salaryRange: salaryRange,
+        createdAt: new Date(),
+        dueDate: dueDate,
+        appliedDate: dateApplied,
+        description: jobDescription,
+        jobType: type,
+        workplaceType,
+        jobUrl,
+        applied,
+        resumeId: resume,
+        coverLetterId: coverLetter,
+        tags: { set: tagIds.map((id) => ({ id })) },
+      },
+    });
+    revalidatePath("/dashboard");
+    return { job, success: true };
+  } catch (error) {
+    const msg = "Failed to update job. ";
+    return handleError(error, msg);
+  }
+};
+
+export const updateJobStatus = async (
+  jobId: string,
+  status: JobStatus,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+    const dataToUpdate = () => {
+      switch (status.value) {
+        case "applied":
+          return {
+            statusId: status.id,
+            applied: true,
+            appliedDate: new Date(),
+          };
+        case "interview":
+          return {
+            statusId: status.id,
+            applied: true,
+          };
+        default:
+          return {
+            statusId: status.id,
+          };
+      }
+    };
+
+    const job = await prisma.job.update({
+      where: {
+        id: jobId,
+        userId: user.id,
+      },
+      data: dataToUpdate(),
+    });
+    revalidatePath("/dashboard");
+    return { job, success: true };
+  } catch (error) {
+    const msg = "Failed to update job status.";
+    return handleError(error, msg);
+  }
+};
+
+export const saveJobMatchResult = async (
+  jobId: string,
+  matchScore: number,
+  matchData: string,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    await prisma.job.update({
+      where: { id: jobId, userId: user.id },
+      data: { matchScore, matchData },
+    });
+
+    return { success: true };
+  } catch (error) {
+    const msg = "Failed to save match result.";
+    return handleError(error, msg);
+  }
+};
+
+export const deleteJobById = async (
+  jobId: string,
+): Promise<any | undefined> => {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const res = await prisma.job.delete({
+      where: {
+        id: jobId,
+        userId: user.id,
+      },
+    });
+    revalidatePath("/dashboard");
+    return { res, success: true };
+  } catch (error) {
+    const msg = "Failed to delete job.";
+    return handleError(error, msg);
+  }
+};

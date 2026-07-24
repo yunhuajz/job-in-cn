@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "jobsync": {
+      "type": "http",
+      "url": "http://localhost:3737/api/mcp",
+      "headers": {
+        "Authorization": "Bearer jsync_REPLACE_WITH_YOUR_TOKEN"
+      }
+    }
+  }
+}

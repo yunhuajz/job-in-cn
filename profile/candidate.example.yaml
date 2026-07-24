@@ -1,0 +1,45 @@
+# 候选人画像(Candidate Profile)示例
+# 用法:复制本文件为 candidate.yaml 后按需修改(candidate.yaml 已被 gitignore,不进库)
+# 术语见 CONTEXT.md;扫描与评分规则见 docs/design.md §3/§4
+
+# 目标岗位关键词列表:扫描时与 preferredCities 做「关键词 × 城市」组合轮询(design.md §3)
+targetRoles:
+  - "AI Agent 工程师"
+  - "大模型应用工程师"
+  - "TypeScript 后端工程师"
+
+# 期望工作城市:与 targetRoles 逐个组合搜索
+preferredCities:
+  - "上海"
+  - "杭州"
+  - "远程"
+
+# 技能清单:与 JD 比对,产出「技能匹配」维度分(design.md §4,权重 25%)
+skills:
+  - "TypeScript"
+  - "Node.js"
+  - "Python"
+  - "LLM 应用开发"
+  - "RAG"
+  - "Playwright"
+
+# 公司质量惩罚词:JD 或公司名命中即扣「公司质量」分(design.md §4,权重 15%)
+avoidKeywords:
+  - "外包"
+  - "996"
+  - "大小周"
+  - "催收"
+
+# 评分后端(design.md §4):OpenAI 兼容接口抽象,换模型只改这一段
+scoring:
+  provider: openai-compatible
+  baseURL: "https://api.deepseek.com/v1"   # Bonsai 本地: http://localhost:8080/v1
+  model: "deepseek-chat"
+  apiKeyEnv: "SCORING_API_KEY"   # key 放在 .env 里,不写进本文件
+  # 五维加权(design.md §4 权重表),总和 1.0,可自调
+  weights:
+    constraints: 0.30   # 硬性条件(双休/节假日):JD 明写单休/大小周重扣;没写不扣分,记入 missingInfo
+    salary: 0.25        # 薪资匹配:「面议」记中性
+    company: 0.15       # 公司质量:avoidKeywords 命中惩罚
+    skills: 0.25        # 技能匹配:画像 skills vs JD
+    city: 0.05          # 城市/通勤:仅参考项
