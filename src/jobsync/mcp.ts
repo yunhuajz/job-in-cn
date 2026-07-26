@@ -86,3 +86,61 @@ export async function addJob(input: AddJobInput): Promise<AddJobResult> {
   const text = await callMcpTool('add_job', { ...input });
   return parseAddJobResult(text);
 }
+
+export interface JobRow {
+  id: string;
+  jobTitle: string;
+  company: string;
+  city: string | null;
+  salary: string | null;
+  matchScore: number | null;
+  weekendRestStatus: string;
+  status: string;
+}
+
+export interface FullJob extends JobRow {
+  source: string | null;
+  jobUrl: string | null;
+  jobDescription: string;
+}
+
+export function parseJobRows(text: string): JobRow[] {
+  if (/^(Error:|Rate limit exceeded)/.test(text)) {
+    throw new Error(text.slice(0, 300));
+  }
+  return JSON.parse(text) as JobRow[];
+}
+
+export function parseFullJob(text: string): FullJob {
+  if (/^(Error:|Rate limit exceeded|Job not found)/.test(text)) {
+    throw new Error(text.slice(0, 300));
+  }
+  return JSON.parse(text) as FullJob;
+}
+
+export async function listJobs(limit = 50): Promise<JobRow[]> {
+  const text = await callMcpTool('list_jobs', { limit });
+  return parseJobRows(text);
+}
+
+export async function getJob(jobId: string): Promise<FullJob> {
+  const text = await callMcpTool('get_job', { jobId });
+  return parseFullJob(text);
+}
+
+export async function updateEvaluation(
+  jobId: string,
+  score: number,
+  evaluationReport: string,
+  matchData: string,
+): Promise<void> {
+  const text = await callMcpTool('update_evaluation', {
+    jobId,
+    score,
+    evaluationReport,
+    matchData,
+  });
+  if (/^(Error:|Rate limit exceeded|matchData is not valid)/.test(text)) {
+    throw new Error(text.slice(0, 300));
+  }
+}

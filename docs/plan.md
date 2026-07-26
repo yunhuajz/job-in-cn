@@ -50,10 +50,10 @@
 | 扩展被风控升级干扰 | 被动读取行为面最小;兜底 = 用户复制页面文本,AI 解析(PRD §9) |
 | 扫描量依赖用户浏览 | 汇总页显示「今日收取 N 个」;对话里提示未刷的关键词 |
 
-## 2. P2 — 每日节奏(概要,P1 验收后展开)
+## 2. P2 — 每日节奏(进行中:评分模块已就绪,待密钥)
 
 - daemon 单 Node 进程(**不碰浏览器**,design.md §2):任务计划程序登录触发 + 12:30/17:30 两轮;职责 = 未评分职位调 LLM 评分 + HR 回复答案回填 + 每日备份 dev.db(留 14 份)。
-- 无人值守评分(design.md §4):OpenAI 兼容客户端(默认 DeepSeek,`SCORING_API_KEY`),五维加权 30/25/15/25/5,输出契约落 `evaluationReport`/`matchScore`(×20)/`matchData`,`missingInfo` 转「待确认」标记;prompt 在 `src/prompts/scoring.md`。
+- 无人值守评分(design.md §4,**模块已完成 2026-07-26**):OpenAI 兼容客户端(默认 DeepSeek,`SCORING_API_KEY`),五维加权 30/25/15/25/5,总分由系统按权重计算(不信 LLM 算术),输出契约落 `evaluationReport`/`matchScore`(×20)/`matchData`,`missingInfo` 转「待确认」标记;prompt 在 `src/prompts/scoring.md`;入口 `npm run score`。配套:jobsync 新增第 6 个 MCP tool `get_job`(取纯文本 JD)。**待办:用户在根目录 .env 填 `SCORING_API_KEY` 后跑一次真评验收;daemon 定时化未做。**
 - 「今日汇总」页(jobsync 内新增只读视图,design.md §5):当日新入库 + 昨日遗留,推荐(≥4.0)/普通(3.0–3.9)分组,每行评分/职位/公司/城市/薪资/双休状态;顶部「今日收取 N 个」;0.5 的硬编码筛选问题在此一并解决。
 - **验收**:白天收取的职位,晚上回家看到带分汇总。
 

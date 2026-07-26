@@ -8,6 +8,8 @@ import {
   McpAddNoteSchema,
   McpAddQuestionInputShape,
   McpAddQuestionSchema,
+  McpGetJobInputShape,
+  McpGetJobSchema,
   McpListJobsInputShape,
   McpListJobsSchema,
   McpSaveMatchResultInputShape,
@@ -22,6 +24,7 @@ import {
 import { handleAddJob } from "@/lib/mcp/tools/addJob";
 import { handleAddNote } from "@/lib/mcp/tools/addNote";
 import { handleAddQuestion } from "@/lib/mcp/tools/addQuestion";
+import { handleGetJob } from "@/lib/mcp/tools/getJob";
 import { handleListJobs } from "@/lib/mcp/tools/listJobs";
 import { handleSaveMatchResult } from "@/lib/mcp/tools/saveMatchResult";
 import { handleSaveResumeVersion } from "@/lib/mcp/tools/saveResumeVersion";
@@ -248,6 +251,34 @@ async function handler(req: Request): Promise<Response> {
         };
       }
       return handleAddNote(parsed.data, userId, tokenName);
+    },
+  );
+
+  server.tool(
+    "get_job",
+    "Fetch one job in full, including the plain-text job description — the input for LLM scoring (design.md §4).",
+    McpGetJobInputShape,
+    async (rawInput) => {
+      if (!auth.scopes.includes("jobs:write")) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Insufficient scope. Required: jobs:write",
+            },
+          ],
+        };
+      }
+      const parsed = McpGetJobSchema.safeParse(rawInput);
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => i.message).join("; ");
+        return {
+          content: [
+            { type: "text" as const, text: `Validation error: ${issues}` },
+          ],
+        };
+      }
+      return handleGetJob(parsed.data, userId, tokenName);
     },
   );
 

@@ -156,3 +156,11 @@ export const McpListJobsSchema = z.object({
   since: z.string().datetime({ offset: true }).optional().transform((v) => (v ? new Date(v) : undefined)),
 });
 export type McpListJobsInput = z.infer<typeof McpListJobsSchema>;
+
+// Raw input shape for MCP tool registration (no transforms needed)
+export const McpGetJobInputShape = {
+  jobId: z.string().min(1).describe("The id of the job to fetch."),
+};
+
+export const McpGetJobSchema = z.object(McpGetJobInputShape);
+export type McpGetJobInput = z.infer<typeof McpGetJobSchema>;

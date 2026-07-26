@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { parseAddJobResult } from '../../src/jobsync/mcp.js';
+import {
+  parseAddJobResult,
+  parseFullJob,
+  parseJobRows,
+} from '../../src/jobsync/mcp.js';
 
 describe('parseAddJobResult', () => {
   it('识别创建成功并取出 jobId', () => {
@@ -33,5 +37,57 @@ describe('parseAddJobResult', () => {
     expect(() =>
       parseAddJobResult('Rate limit exceeded. Try again in 30s.'),
     ).toThrow(/Rate limit/);
+  });
+});
+
+describe('parseJobRows', () => {
+  it('解析 list_jobs 的 JSON 行', () => {
+    const rows = parseJobRows(
+      JSON.stringify([
+        {
+          id: 'a',
+          jobTitle: 'AI Agent 工程师',
+          company: '考试星',
+          city: '北京',
+          salary: '25-35K',
+          matchScore: null,
+          weekendRestStatus: 'none',
+          status: 'Draft',
+        },
+      ]),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].matchScore).toBeNull();
+  });
+
+  it('错误文本抛错', () => {
+    expect(() => parseJobRows('Error: db down')).toThrow(/db down/);
+  });
+});
+
+describe('parseFullJob', () => {
+  it('解析 get_job 的完整职位(含 JD)', () => {
+    const job = parseFullJob(
+      JSON.stringify({
+        id: 'a',
+        jobTitle: 't',
+        company: 'c',
+        city: '北京',
+        salary: '25-35K',
+        source: 'Boss直聘',
+        status: 'Draft',
+        matchScore: null,
+        weekendRestStatus: 'none',
+        jobUrl: 'https://example.com/j.html',
+        jobDescription: '负责 Agent 开发',
+      }),
+    );
+    expect(job.jobDescription).toBe('负责 Agent 开发');
+  });
+
+  it('职位不存在时抛错', () => {
+    expect(() =>
+      parseFullJob("Job not found or not owned by this token's user."),
+    ).toThrow(/not found/);
   });
 });
