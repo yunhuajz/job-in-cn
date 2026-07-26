@@ -52,8 +52,8 @@
 
 ## 2. P2 — 每日节奏(进行中:模块全部就绪,待密钥 + 验收)
 
-- daemon 单 Node 进程(**不碰浏览器**,design.md §2,**已完成 2026-07-26**):`npm run daemon`;PID 单例(`data/daemon.pid`,重复启动返回"已在运行")、日志 `data/daemon.log`、启动补跑 + 12:30/17:30 两轮(`src/daemon/schedule.ts`)、每日备份 dev.db → `backups/dev-YYYYMMDD.db` 留 14 份(`src/daemon/backup.ts`,同日幂等);缺密钥时评分跳过不崩溃。**待办:注册 Windows 任务计划程序(登录触发);HR 回复答案回填未做(属 P3 消息捕获链路)。**
-- 无人值守评分(design.md §4,**模块已完成 2026-07-26**):OpenAI 兼容客户端(默认 DeepSeek,`SCORING_API_KEY`),五维加权 30/25/15/25/5,总分由系统按权重计算(不信 LLM 算术),输出契约落 `evaluationReport`/`matchScore`(×20)/`matchData`,`missingInfo` 转「待确认」标记;prompt 在 `src/prompts/scoring.md`;入口 `npm run score`。配套:jobsync 新增第 6 个 MCP tool `get_job`(取纯文本 JD)。**待办:用户在根目录 .env 填 `SCORING_API_KEY` 后跑一次真评验收;daemon 定时化未做。**
+- daemon 单 Node 进程(**不碰浏览器**,design.md §2,**已完成 2026-07-26**):`npm run daemon`;PID 单例(`data/daemon.pid`,重复启动返回"已在运行")、日志 `data/daemon.log`、启动补跑 + 12:30/17:30 两轮(`src/daemon/schedule.ts`)、每日备份 dev.db → `backups/dev-YYYYMMDD.db` 留 14 份(`src/daemon/backup.ts`,同日幂等);缺密钥时评分跳过不崩溃;Windows 任务计划程序 `AJS-JobHunt-Daemon` 已注册(登录触发)。**待办:HR 回复的 LLM 答案抽取回填未做(属 P3 消息捕获链路,读侧捕获已完成)。**
+- 无人值守评分(design.md §4,**模块已完成 2026-07-26**):OpenAI 兼容客户端(默认 DeepSeek,`SCORING_API_KEY`),五维加权 30/25/15/25/5,总分由系统按权重计算(不信 LLM 算术),输出契约落 `evaluationReport`/`matchScore`(×20)/`matchData`,`missingInfo` 转「待确认」标记;prompt 在 `src/prompts/scoring.md`;入口 `npm run score`。配套:jobsync 新增第 6 个 MCP tool `get_job`(取纯文本 JD)。**待办:用户在根目录 .env 填 `SCORING_API_KEY` 后跑一次真评验收。**
 - 「今日汇总」页(**已完成 2026-07-26**):`/dashboard/today` 只读视图,当日新入库 + 昨日遗留,推荐(≥4.0)/普通(3.0–3.9)/待评分三组,每行评分/职位(带 Boss 链接)/公司/城市/薪资/双休状态/摘要;顶部「今日收取 N 个」。0.5 的 Jobs 页硬编码筛选问题仍未处理(与本页独立,后续单独修)。
 - **验收**:白天收取的职位,晚上回家看到带分汇总。
 
@@ -62,7 +62,7 @@
 - 批量批准(双入口,Claude Code 对话先行):批准前 Claude Code **复述清单**,用户答「确认」才 `set_status` 落「已批准」;只认当日汇总内的职位(A2 闸,铁律)。
 - 投递:AI agent 经 OpenCLI Browser Bridge 扩展驱动真实浏览器,选中 Boss 预存的一版常用语**一键发送**,不现场打字;发完回写 `greetingSentAt`。
 - 人化频率:≤20 条/天、间隔 30s–3min、仅 9:00–21:00;验证码交人、风控弹窗当天熔断停投。
-- HR 回复只读捕获:原文存 Note、回填 `hrReplyAt`、LLM 抽取双休/薪资答案回填(低置信度转人工标记);**确认问句永远由用户本人手机发出**(ADR-0001 修订)。
+- HR 回复只读捕获(**读侧已完成 2026-07-26**):`npm run boss:sync-replies` 拉 chatlist/chatmsg(opencli boss 适配器),公司双向前缀匹配库内职位,HR 文本原文存 Note、回填 `hrReplyAt`(幂等,jobsync 第 7 个 MCP tool `add_hr_reply`);真机 dry-run 通过(20 会话/0 匹配,属预期——聊天列表职位未入库)。**待办:LLM 抽取双休/薪资答案回填(低置信度转人工标记)。确认问句永远由用户本人手机发出**(ADR-0001 修订)。
 - jobsync UI 补勾选批准按钮(P3 才做)。
 - **验收**:批准 3 个职位,自动投出且账号无恙;「待确认」职位的 HR 回复正确回填。
 
