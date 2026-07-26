@@ -417,10 +417,11 @@ function JobsContainer({
                   <SelectLabel>Filter by</SelectLabel>
                   <SelectSeparator />
                   <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="applied">Applied</SelectItem>
-                  <SelectItem value="interview">Interview</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  {statuses.map((status) => (
+                    <SelectItem key={status.id} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
                   <SelectItem value="PT">Part-time</SelectItem>
                   <SelectItem value="accepted">Accepted (discovered)</SelectItem>
                   <SelectItem value="dismissed">Dismissed (discovered)</SelectItem>

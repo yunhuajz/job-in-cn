@@ -13,7 +13,7 @@
 | 0.2 | 正式账号 | 用户 | 在 http://localhost:3737 注册本人账号并补跑种子(`cd apps/web && npx prisma db seed`),或继续用测试账号 |
 | 0.3 | Node 版本约定 | 用户拍板 | 约定 22,实际 24.15 且一切正常;统一装 nvm-windows 切 22,或把约定改为 ≥22 |
 | 0.4 | MCP token 到期 | 系统 | 2027-07 前后过期,到期重签并更新 `.mcp.json` |
-| 0.5 | Jobs 页 Filter by 硬编码 | 冻结 | 上游行为(`JobsContainer.tsx:424`),不读 JobStatus 表;P2 做「今日汇总」页时一并处理 |
+| 0.5 | Jobs 页 Filter by 硬编码 | 已修复 2026-07-26 | `JobsContainer.tsx` 状态选项改从 `statuses`(JobStatus 表)渲染;服务端 `getJobsList` 本就支持任意 status value,保留 PT/accepted/dismissed 三个特殊项 |
 | 0.6 | ~~boss:login 专用 profile~~ | 已清理 | ADR-0002(2026-07-26):`login.ts`/`status.ts`/`browser.ts`/`login-state.ts` 及其测试已删除 |
 | 0.7 | OpenCLI 通道 | 已就绪 | `@jackwener/opencli` 全局已装、Browser Bridge 扩展已连通(`opencli doctor` 全 OK)、Boss 页面被动读取实测存活 |
 
@@ -54,7 +54,7 @@
 
 - daemon 单 Node 进程(**不碰浏览器**,design.md §2,**已完成 2026-07-26**):`npm run daemon`;PID 单例(`data/daemon.pid`,重复启动返回"已在运行")、日志 `data/daemon.log`、启动补跑 + 12:30/17:30 两轮(`src/daemon/schedule.ts`)、每日备份 dev.db → `backups/dev-YYYYMMDD.db` 留 14 份(`src/daemon/backup.ts`,同日幂等);缺密钥时评分跳过不崩溃;Windows 任务计划程序 `AJS-JobHunt-Daemon` 已注册(登录触发)。**待办:HR 回复的 LLM 答案抽取回填未做(属 P3 消息捕获链路,读侧捕获已完成)。**
 - 无人值守评分(design.md §4,**模块已完成 2026-07-26**):OpenAI 兼容客户端(默认 DeepSeek,`SCORING_API_KEY`),五维加权 30/25/15/25/5,总分由系统按权重计算(不信 LLM 算术),输出契约落 `evaluationReport`/`matchScore`(×20)/`matchData`,`missingInfo` 转「待确认」标记;prompt 在 `src/prompts/scoring.md`;入口 `npm run score`。配套:jobsync 新增第 6 个 MCP tool `get_job`(取纯文本 JD)。**待办:用户在根目录 .env 填 `SCORING_API_KEY` 后跑一次真评验收。**
-- 「今日汇总」页(**已完成 2026-07-26**):`/dashboard/today` 只读视图,当日新入库 + 昨日遗留,推荐(≥4.0)/普通(3.0–3.9)/待评分三组,每行评分/职位(带 Boss 链接)/公司/城市/薪资/双休状态/摘要;顶部「今日收取 N 个」。0.5 的 Jobs 页硬编码筛选问题仍未处理(与本页独立,后续单独修)。
+- 「今日汇总」页(**已完成 2026-07-26**):`/dashboard/today` 只读视图,当日新入库 + 昨日遗留,推荐(≥4.0)/普通(3.0–3.9)/待评分三组,每行评分/职位(带 Boss 链接)/公司/城市/薪资/双休状态/摘要;顶部「今日收取 N 个」。0.5 的 Jobs 页硬编码筛选已修复(2026-07-26)。
 - **验收**:白天收取的职位,晚上回家看到带分汇总。
 
 ## 3. P3 — 写侧 A2(核心,概要)
