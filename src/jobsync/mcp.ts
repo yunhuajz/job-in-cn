@@ -96,6 +96,7 @@ export interface JobRow {
   matchScore: number | null;
   weekendRestStatus: string;
   hrReplyAt?: string | null;
+  greetingSentAt?: string | null;
   status: string;
 }
 
@@ -122,6 +123,27 @@ export function parseFullJob(text: string): FullJob {
 export async function listJobs(limit = 50): Promise<JobRow[]> {
   const text = await callMcpTool('list_jobs', { limit });
   return parseJobRows(text);
+}
+
+export async function listJobsByStatus(
+  status: string,
+  limit = 50,
+): Promise<JobRow[]> {
+  const text = await callMcpTool('list_jobs', { status, limit });
+  return parseJobRows(text);
+}
+
+export async function markGreetingSent(
+  jobId: string,
+  sentAt?: Date,
+): Promise<void> {
+  const text = await callMcpTool('mark_greeting_sent', {
+    jobId,
+    ...(sentAt ? { sentAt: sentAt.toISOString() } : {}),
+  });
+  if (/^(Error:|Rate limit exceeded|Job not found|Refused:)/.test(text)) {
+    throw new Error(text.slice(0, 300));
+  }
 }
 
 export async function getJob(jobId: string): Promise<FullJob> {

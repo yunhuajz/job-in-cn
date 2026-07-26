@@ -61,6 +61,7 @@ export async function handleListJobs(
         salaryRange: true,
         weekendRestStatus: true,
         hrReplyAt: true,
+        greetingSentAt: true,
         JobTitle: { select: { label: true } },
         Company: { select: { label: true } },
         Location: { select: { label: true } },
@@ -77,6 +78,7 @@ export async function handleListJobs(
         matchScore: job.matchScore,
         weekendRestStatus: job.weekendRestStatus,
         hrReplyAt: job.hrReplyAt,
+        greetingSentAt: job.greetingSentAt,
         status: job.Status.label,
       }));
 

@@ -60,8 +60,8 @@
 ## 3. P3 — 写侧 A2(核心,概要)
 
 - 批量批准(双入口,Claude Code 对话先行):批准前 Claude Code **复述清单**,用户答「确认」才 `set_status` 落「已批准」;只认当日汇总内的职位(A2 闸,铁律)。
-- 投递:AI agent 经 OpenCLI Browser Bridge 扩展驱动真实浏览器,选中 Boss 预存的一版常用语**一键发送**,不现场打字;发完回写 `greetingSentAt`。
-- 人化频率:≤20 条/天、间隔 30s–3min、仅 9:00–21:00;验证码交人、风控弹窗当天熔断停投。
+- 投递(**机制已完成 2026-07-26**):`npm run boss:greet`(src/boss/greet.ts + greet-jobs.ts),opencli browser 会话打开职位页 → 找 `a.btn-startchat`「立即沟通」→ 点击触发 Boss **预存常用语一键发送**(不现场打字)→ 验证按钮变「继续沟通」→ 回写 `greetingSentAt`(jobsync 第 8 个 MCP tool `mark_greeting_sent`,**服务端 A2 闸**:仅 approved 状态可回写)。CLI 默认 dry-run 打印复述清单,`--send=<id,...>` 才真发,且 id 必须在已批准候选内。**待办:真发验收(需用户对话批准);已沟通职位显示「继续沟通」时自动跳过。**
+- 人化频率(**已内建于 boss:greet**):≤20 条/天(按当日 greetingSentAt 计数)、间隔 30s–3min 随机、仅 9:00–21:00(窗口外拒绝执行)、连续失败 2 次熔断;页面出现安全验证/滑块/操作频繁等信号立即熔断停投,验证码交人。
 - HR 回复只读捕获(**读侧已完成 2026-07-26**):`npm run boss:sync-replies` 拉 chatlist/chatmsg(opencli boss 适配器),公司双向前缀匹配库内职位,HR 文本原文存 Note、回填 `hrReplyAt`(幂等,jobsync 第 7 个 MCP tool `add_hr_reply`);真机 dry-run 通过(20 会话/0 匹配,属预期——聊天列表职位未入库)。**待办:LLM 抽取双休/薪资答案回填(低置信度转人工标记)。确认问句永远由用户本人手机发出**(ADR-0001 修订)。
 - jobsync UI 补勾选批准按钮(P3 才做)。
 - **验收**:批准 3 个职位,自动投出且账号无恙;「待确认」职位的 HR 回复正确回填。

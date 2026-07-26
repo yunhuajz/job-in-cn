@@ -14,6 +14,8 @@ import {
   McpGetJobSchema,
   McpListJobsInputShape,
   McpListJobsSchema,
+  McpMarkGreetingSentInputShape,
+  McpMarkGreetingSentSchema,
   McpSaveMatchResultInputShape,
   McpSaveMatchResultSchema,
   McpSaveResumeVersionInputShape,
@@ -29,6 +31,7 @@ import { handleAddQuestion } from "@/lib/mcp/tools/addQuestion";
 import { handleAddHrReply } from "@/lib/mcp/tools/addHrReply";
 import { handleGetJob } from "@/lib/mcp/tools/getJob";
 import { handleListJobs } from "@/lib/mcp/tools/listJobs";
+import { handleMarkGreetingSent } from "@/lib/mcp/tools/markGreetingSent";
 import { handleSaveMatchResult } from "@/lib/mcp/tools/saveMatchResult";
 import { handleSaveResumeVersion } from "@/lib/mcp/tools/saveResumeVersion";
 import { handleSetStatus } from "@/lib/mcp/tools/setStatus";
@@ -282,6 +285,34 @@ async function handler(req: Request): Promise<Response> {
         };
       }
       return handleAddHrReply(parsed.data, userId, tokenName);
+    },
+  );
+
+  server.tool(
+    "mark_greeting_sent",
+    "Mark that the Boss preset greeting was sent for a job: backfills greetingSentAt and adds a Note. Server-enforced gate: only jobs already in 'approved' status are accepted.",
+    McpMarkGreetingSentInputShape,
+    async (rawInput) => {
+      if (!auth.scopes.includes("jobs:write")) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Insufficient scope. Required: jobs:write",
+            },
+          ],
+        };
+      }
+      const parsed = McpMarkGreetingSentSchema.safeParse(rawInput);
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => i.message).join("; ");
+        return {
+          content: [
+            { type: "text" as const, text: `Validation error: ${issues}` },
+          ],
+        };
+      }
+      return handleMarkGreetingSent(parsed.data, userId, tokenName);
     },
   );
 

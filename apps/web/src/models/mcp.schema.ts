@@ -184,3 +184,19 @@ export const McpAddHrReplySchema = z.object({
   repliedAt: z.string().datetime({ offset: true }).optional().transform((v) => (v ? new Date(v) : undefined)),
 });
 export type McpAddHrReplyInput = z.infer<typeof McpAddHrReplySchema>;
+
+// Raw input shape for MCP tool registration (no transforms needed)
+export const McpMarkGreetingSentInputShape = {
+  jobId: z.string().min(1).describe("The id of the job the greeting was sent to."),
+  sentAt: z
+    .string()
+    .datetime({ offset: true })
+    .optional()
+    .describe("招呼发送时间(ISO-8601);缺省为服务器当前时间."),
+};
+
+export const McpMarkGreetingSentSchema = z.object({
+  ...McpMarkGreetingSentInputShape,
+  sentAt: z.string().datetime({ offset: true }).optional().transform((v) => (v ? new Date(v) : undefined)),
+});
+export type McpMarkGreetingSentInput = z.infer<typeof McpMarkGreetingSentSchema>;
