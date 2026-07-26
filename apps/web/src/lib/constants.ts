@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Sun,
   SquareCheckBig,
   BriefcaseBusiness,
   CalendarClock,
@@ -159,6 +160,11 @@ export const SIDEBAR_LINKS = [
     icon: LayoutDashboard,
     route: "/dashboard",
     label: "Dashboard",
+  },
+  {
+    icon: Sun,
+    route: "/dashboard/today",
+    label: "今日汇总",
   },
   {
     icon: BriefcaseBusiness,
