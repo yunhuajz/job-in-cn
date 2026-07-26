@@ -14,6 +14,13 @@ preferredCities:
   - "杭州"
   - "远程"
 
+# 薪资下限:对应 Boss 原生薪资过滤器的下限档位(design.md §3),形如 "20K"
+salaryFloor: "20K"
+
+# 经验年限:对应 Boss 原生经验过滤器档位(design.md §3)
+# 合法值:在校生 / 应届毕业生 / 1年以内 / 1-3年 / 3-5年 / 5-10年 / 10年以上
+experience: "3-5年"
+
 # 技能清单:与 JD 比对,产出「技能匹配」维度分(design.md §4,权重 25%)
 skills:
   - "TypeScript"
