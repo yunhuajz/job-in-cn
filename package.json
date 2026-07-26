@@ -9,8 +9,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "boss:login": "tsx src/boss/login.ts",
-    "boss:status": "tsx src/boss/status.ts",
+    "boss:harvest": "tsx src/boss/harvest.ts",
     "profile:check": "tsx src/lib/profile-check.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"

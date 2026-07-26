@@ -1,6 +1,6 @@
 # 实施计划 — job-for-claude(AJS)
 
-> 状态:v2 · 2026-07-26(读侧改陪同式抽取,ADR-0002 修订;v1:2026-07-24,P0 已完成并提交 `253e10e`)
+> 状态:v3 · 2026-07-26(P1 完成:读侧改用 OpenCLI boss 站点适配器主动采集,ADR-0002 第二次修订;v2:读侧陪同式抽取;v1:2026-07-24,P0 已完成并提交 `253e10e`)
 > 性质:执行层计划。做什么/为什么见 `PRD.md`,技术结论见 `design.md`,权衡见 `adr/`;本文档只把它们拆成可执行、可验收的步骤,不引入新设计。出现新设计分叉时走访谈(grill),不在本文档里猜。
 
 ---
@@ -14,14 +14,14 @@
 | 0.3 | Node 版本约定 | 用户拍板 | 约定 22,实际 24.15 且一切正常;统一装 nvm-windows 切 22,或把约定改为 ≥22 |
 | 0.4 | MCP token 到期 | 系统 | 2027-07 前后过期,到期重签并更新 `.mcp.json` |
 | 0.5 | Jobs 页 Filter by 硬编码 | 冻结 | 上游行为(`JobsContainer.tsx:424`),不读 JobStatus 表;P2 做「今日汇总」页时一并处理 |
-| 0.6 | ~~boss:login 专用 profile~~ | 作废 | ADR-0002(2026-07-26):改用日常浏览器登录态;`src/boss/login.ts`/`status.ts` 待清理 |
+| 0.6 | ~~boss:login 专用 profile~~ | 已清理 | ADR-0002(2026-07-26):`login.ts`/`status.ts`/`browser.ts`/`login-state.ts` 及其测试已删除 |
 | 0.7 | OpenCLI 通道 | 已就绪 | `@jackwener/opencli` 全局已装、Browser Bridge 扩展已连通(`opencli doctor` 全 OK)、Boss 页面被动读取实测存活 |
 
-## 1. P1 — Boss 读侧:陪同式抽取(当前阶段)
+## 1. P1 — Boss 读侧:适配器主动采集(已完成 2026-07-26)
 
 **交付**(PRD §7):扩展通道打通(已完成);搜索列表页 + JD 详情页 → 结构化;jobId 去重;落 jobsync(城市/薪资填充)。
-**验收**:用户浏览一次搜索结果页,职位进收件箱。
-**铁律**:系统对浏览器**只被动读取**,不做任何自动导航(ADR-0002);滑块/验证由用户本人随手过。
+**验收**:dry-run 已通过 —— `boss:harvest --query "AI Agent 工程师" --city 北京 --limit 3` 新入库 2 / 去重跳过 1 / 异常 0,数据库确认 JD 全文、城市、薪资、来源均正确。
+**铁律**:主动导航已经用户明确批准(2026-07-26);滑块/验证仍由用户本人随手过;HR 消息严格只读。
 
 ### 任务分解
 
@@ -29,18 +29,18 @@
 |---|------|------|------|
 | 1.1 | ~~画像对话式填写~~ → 机制化(已完成) | `/setup-profile` 命令 + `npm run profile:check` | — |
 | 1.2 | 画像加载器(已完成) | `src/lib/profile.ts`,zod 校验 | — |
-| 1.3 | 扩展通道封装 | `src/boss/bridge.ts`:Node 侧调用 `opencli browser <session> eval/extract` 的最小封装(执行命令、解析 JSON、错误分类) | 0.7 |
-| 1.4 | 列表页抽取器 | 纯函数:列表页 DOM/JSON → 职位卡片[](标题/公司/城市/薪资/jobId);fixture 来自真实页面 | 1.3 |
-| 1.5 | JD 详情页抽取器 | 纯函数:详情页 DOM → JD 全文/薪资/城市;fixture 来自真实页面 | 1.3 |
-| 1.6 | 去重 + 落库管道 | `src/boss/pipeline.ts`:jobId(URL)去重 → MCP `add_job`(source=Boss直聘,城市/薪资填充) | 1.4、1.5 |
-| 1.7 | `npm run boss:harvest` | 一键收取当前页:用户把浏览器停在搜索页/详情页,命令抽取并落库,打印收取报告(新 N 个/跳过 M 个重复) | 全部 |
-| 1.8 | dry-run 手动验收 | 用户浏览一个搜索结果页,跑 1.7,确认职位进看板 | 全部 |
+| 1.3 | 扩展通道封装(已完成) | `src/boss/bridge.ts` + `src/boss/opencli.ts`:调用 `opencli boss search/detail/whoami`,JSON 解析、错误分类、stale 会话自愈、90s 超时 | 0.7 |
+| 1.4 | 列表页抽取器(已完成) | `src/boss/map.ts` 纯函数:适配器 JSON → 职位卡片(标题/公司/城市/薪资/jobId);fixture 来自真实采集 | 1.3 |
+| 1.5 | JD 详情页抽取器(已完成) | 同上 `map.ts`:详情 JSON → JD 全文/薪资/城市;fixture 来自真实采集 | 1.3 |
+| 1.6 | 去重 + 落库管道(已完成) | `src/boss/pipeline.ts` + `src/jobsync/mcp.ts`:jobId(URL)服务端去重 → MCP `add_job`(source=Boss直聘,城市/薪资填充) | 1.4、1.5 |
+| 1.7 | `npm run boss:harvest`(已完成) | 按画像「关键词 × 城市」轮询或 CLI 单组指定,打印收取报告(新 N 个/跳过 M 个重复) | 全部 |
+| 1.8 | dry-run 手动验收(已完成) | 见上「验收」;用户可在 http://localhost:3737 看板复核 | 全部 |
 
 ### TDD seams(已确认原则,写测试前与用户确认细节)
 
-- **可测**(纯函数,fixture 驱动):列表页/详情页抽取器;URL → jobId 提取与去重;Boss 职位 → `add_job` 输入的映射;通道封装的输出解析(模拟 stdout)。
-- **不可测**(如实说明):真实浏览器内页面状态、Boss 风控行为——靠 1.8 手动验收;页面结构变化由晚间 Claude Code 现场修理(同通道,ADR-0002)。
-- fixture 获取:用 `opencli browser boss eval`/`extract` 抓真实页面 DOM 存 `tests/fixtures/boss/`。
+- **可测**(纯函数,fixture 驱动,已落地 34 条):适配器 JSON → 卡片/详情映射;URL → jobId 提取;Boss 职位 → `add_job` 输入的映射;opencli stdout 解析(含噪音行);管道记账(新增/重复/异常)。
+- **不可测**(如实说明):真实浏览器内页面状态、Boss 风控行为、jobsync MCP 传输层稳定性——靠 dry-run 与日常使用观察;适配器输出结构变化由晚间现场修理(同通道,ADR-0002)。
+- fixture 获取:`opencli boss search/detail -f json` 的真实输出存 `tests/fixtures/boss/`。
 
 ### 风险与对策
 
@@ -79,6 +79,6 @@
 1. A2 人闸:发招呼前必须用户批量批准,批准前复述清单二次确认。
 2. 系统对 HR 消息**严格只读**;HR 对话永远用户本人在手机 App 进行。
 3. 飞书/ACP 属用户个人用法,不写入本仓库任何代码。
-4. 人化频率:≤20 条/天、间隔 30s–3min,仅 9:00–21:00。
+4. 人化频率:≤20 条/天、间隔 30s–3min,仅 9:00–21:00(针对写侧发招呼;读侧采集保持克制节奏,详情间隔 1.5s)。
 5. jobsync `dev.db` 是唯一真相;schema 改动遵守 ADR-0005「可筛选/可展示才成列」。
-6. 浏览器只被动读取,永不自动导航;主动驱动通道已全部证伪(ADR-0002)。
+6. ~~浏览器只被动读取,永不自动导航~~ → 2026-07-26 用户批准:读侧可经 OpenCLI boss 适配器主动采集(ADR-0002 第二次修订);写侧发送仍必须走 A2 人闸。
