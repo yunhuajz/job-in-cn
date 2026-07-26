@@ -60,6 +60,7 @@ export async function handleListJobs(
         matchScore: true,
         salaryRange: true,
         weekendRestStatus: true,
+        hrReplyAt: true,
         JobTitle: { select: { label: true } },
         Company: { select: { label: true } },
         Location: { select: { label: true } },
@@ -72,11 +73,12 @@ export async function handleListJobs(
       jobTitle: job.JobTitle.label,
       company: job.Company.label,
       city: job.Location?.label ?? null,
-      salary: job.salaryRange,
-      matchScore: job.matchScore,
-      weekendRestStatus: job.weekendRestStatus,
-      status: job.Status.label,
-    }));
+        salary: job.salaryRange,
+        matchScore: job.matchScore,
+        weekendRestStatus: job.weekendRestStatus,
+        hrReplyAt: job.hrReplyAt,
+        status: job.Status.label,
+      }));
 
     return { content: [{ type: "text", text: JSON.stringify(rows) }] };
   } catch (err: any) {

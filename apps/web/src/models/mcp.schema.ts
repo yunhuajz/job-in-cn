@@ -164,3 +164,23 @@ export const McpGetJobInputShape = {
 
 export const McpGetJobSchema = z.object(McpGetJobInputShape);
 export type McpGetJobInput = z.infer<typeof McpGetJobSchema>;
+
+// Raw input shape for MCP tool registration (no transforms needed)
+export const McpAddHrReplyInputShape = {
+  jobId: z.string().min(1).describe("The id of the job this HR reply belongs to."),
+  content: z
+    .string()
+    .min(1)
+    .describe("HR 回复原文(存 Note,只读存档,不改写不总结)."),
+  repliedAt: z
+    .string()
+    .datetime({ offset: true })
+    .optional()
+    .describe("HR 回复时间(ISO-8601);缺省为服务器当前时间."),
+};
+
+export const McpAddHrReplySchema = z.object({
+  ...McpAddHrReplyInputShape,
+  repliedAt: z.string().datetime({ offset: true }).optional().transform((v) => (v ? new Date(v) : undefined)),
+});
+export type McpAddHrReplyInput = z.infer<typeof McpAddHrReplySchema>;

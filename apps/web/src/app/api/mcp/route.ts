@@ -4,6 +4,8 @@ import { resolveMcpToken } from "@/lib/mcp/auth";
 import {
   McpAddJobInputShape,
   McpAddJobSchema,
+  McpAddHrReplyInputShape,
+  McpAddHrReplySchema,
   McpAddNoteInputShape,
   McpAddNoteSchema,
   McpAddQuestionInputShape,
@@ -24,6 +26,7 @@ import {
 import { handleAddJob } from "@/lib/mcp/tools/addJob";
 import { handleAddNote } from "@/lib/mcp/tools/addNote";
 import { handleAddQuestion } from "@/lib/mcp/tools/addQuestion";
+import { handleAddHrReply } from "@/lib/mcp/tools/addHrReply";
 import { handleGetJob } from "@/lib/mcp/tools/getJob";
 import { handleListJobs } from "@/lib/mcp/tools/listJobs";
 import { handleSaveMatchResult } from "@/lib/mcp/tools/saveMatchResult";
@@ -251,6 +254,34 @@ async function handler(req: Request): Promise<Response> {
         };
       }
       return handleAddNote(parsed.data, userId, tokenName);
+    },
+  );
+
+  server.tool(
+    "add_hr_reply",
+    "Record one HR reply for a job: stores the原文 as a Note and backfills hrReplyAt (ADR-0005). Read-only capture — never sends anything.",
+    McpAddHrReplyInputShape,
+    async (rawInput) => {
+      if (!auth.scopes.includes("jobs:write")) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Insufficient scope. Required: jobs:write",
+            },
+          ],
+        };
+      }
+      const parsed = McpAddHrReplySchema.safeParse(rawInput);
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => i.message).join("; ");
+        return {
+          content: [
+            { type: "text" as const, text: `Validation error: ${issues}` },
+          ],
+        };
+      }
+      return handleAddHrReply(parsed.data, userId, tokenName);
     },
   );
 

@@ -10,6 +10,7 @@
   "scripts": {
     "test": "vitest run",
     "boss:harvest": "tsx src/boss/harvest.ts",
+    "boss:sync-replies": "tsx src/boss/sync-replies.ts",
     "daemon": "tsx src/daemon/index.ts",
     "score": "tsx src/scoring/run.ts",
     "profile:check": "tsx src/lib/profile-check.ts",

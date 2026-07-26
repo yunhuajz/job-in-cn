@@ -95,6 +95,7 @@ export interface JobRow {
   salary: string | null;
   matchScore: number | null;
   weekendRestStatus: string;
+  hrReplyAt?: string | null;
   status: string;
 }
 
@@ -141,6 +142,21 @@ export async function updateEvaluation(
     matchData,
   });
   if (/^(Error:|Rate limit exceeded|matchData is not valid)/.test(text)) {
+    throw new Error(text.slice(0, 300));
+  }
+}
+
+export async function addHrReply(
+  jobId: string,
+  content: string,
+  repliedAt?: Date,
+): Promise<void> {
+  const text = await callMcpTool('add_hr_reply', {
+    jobId,
+    content,
+    ...(repliedAt ? { repliedAt: repliedAt.toISOString() } : {}),
+  });
+  if (/^(Error:|Rate limit exceeded|Job not found)/.test(text)) {
     throw new Error(text.slice(0, 300));
   }
 }
