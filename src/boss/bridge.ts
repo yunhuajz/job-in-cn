@@ -10,11 +10,15 @@ import {
 // 适配器经 Browser Bridge 扩展复用日常 Chrome 的登录态,主动打开标签页采集
 
 const BOSS_JOBS_URL = 'https://www.zhipin.com/web/geek/jobs';
+// 后台窗口执行(opencli --window background):采集不再抢占用户可见的 Chrome 窗口,
+// 适配器每条详情都会 page.goto 一次,前台模式下表现为"网页一直刷新"
 const SESSION_ARGS = [
   '--site-session',
   'persistent',
   '--keep-tab',
   'true',
+  '--window',
+  process.env.OPENCLI_WINDOW ?? 'background',
   '-f',
   'json',
 ];

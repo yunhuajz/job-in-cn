@@ -26,6 +26,8 @@ export interface HarvestReport {
   added: Array<{ jobId: string; title: string; jobSyncId: string }>;
   duplicates: Array<{ jobId: string; title: string }>;
   errors: HarvestItemError[];
+  // jobsync MCP 限流时整批熔断:继续刷只会把后续组合全部打成错误
+  abortedByRateLimit?: boolean;
 }
 
 const defaultDeps: HarvestDeps = {
@@ -68,11 +70,16 @@ export async function harvestJobs(
         report.duplicates.push({ jobId: card.jobId, title: card.title });
       }
     } catch (error) {
+      const message = (error as Error).message;
       report.errors.push({
         jobId: card.jobId,
         title: card.title,
-        message: `落库失败:${(error as Error).message}`,
+        message: `落库失败:${message}`,
       });
+      if (/^Rate limit exceeded/.test(message)) {
+        report.abortedByRateLimit = true;
+        break;
+      }
     }
     await deps.sleep(DETAIL_INTERVAL_MS);
   }

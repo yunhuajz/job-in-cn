@@ -81,6 +81,12 @@ async function main(): Promise<void> {
     totals.added += report.added.length;
     totals.duplicates += report.duplicates.length;
     totals.errors += report.errors.length;
+    if (report.abortedByRateLimit) {
+      console.log(
+        '\njobsync MCP 限流,整批熔断:等限流窗口重置(≤1 小时)后再跑,剩余组合未执行。',
+      );
+      break;
+    }
   }
   console.log(
     `\n收取完成:新入库 ${totals.added} · 重复 ${totals.duplicates} · 异常 ${totals.errors}`,

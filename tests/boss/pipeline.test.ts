@@ -85,4 +85,21 @@ describe('harvestJobs', () => {
     expect(report.added).toHaveLength(3);
     expect(report.errors).toHaveLength(3);
   });
+
+  it('MCP 限流时熔断整批,不再刷后续职位', async () => {
+    let calls = 0;
+    const report = await harvestJobs(
+      { query: 'AI Agent', city: '北京' },
+      makeDeps({
+        addJob: async () => {
+          calls += 1;
+          throw new Error('Rate limit exceeded. Try again in 2388s.');
+        },
+      }),
+    );
+    expect(calls).toBe(1);
+    expect(report.abortedByRateLimit).toBe(true);
+    expect(report.errors).toHaveLength(1);
+    expect(report.added).toHaveLength(0);
+  });
 });

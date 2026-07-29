@@ -42,6 +42,8 @@ const SESSION_ARGS = [
   'persistent',
   '--keep-tab',
   'true',
+  '--window',
+  process.env.OPENCLI_WINDOW ?? 'background',
   '-f',
   'json',
 ];
