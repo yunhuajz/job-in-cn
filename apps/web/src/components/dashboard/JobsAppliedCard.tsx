@@ -15,9 +15,9 @@ export default function JobsAppliedCard() {
   return (
     <Card className="sm:col-span-2">
       <CardHeader className="pb-3">
-        <CardTitle className="text-green-600">Dashboard</CardTitle>
+        <CardTitle className="text-green-600">总览</CardTitle>
         <CardDescription className="max-w-lg text-balance leading-relaxed">
-          Create new jobs and tasks.
+          新建岗位和任务。
         </CardDescription>
       </CardHeader>
       <CardFooter className="flex flex-col gap-2 items-start">
@@ -26,14 +26,14 @@ export default function JobsAppliedCard() {
           onClick={() => router.push("/dashboard/myjobs?add-job=true")}
         >
           <PlusCircle className="h-3.5 w-3.5 mr-1" />
-          <span className="sm:not-sr-only sm:whitespace-nowrap">New Job</span>
+          <span className="sm:not-sr-only sm:whitespace-nowrap">新建岗位</span>
         </Button>
         <Button
           variant="outline"
           onClick={() => router.push("/dashboard/tasks")}
         >
           <PlusCircle className="h-3.5 w-3.5 mr-1" />
-          <span className="sm:not-sr-only sm:whitespace-nowrap">New Task</span>
+          <span className="sm:not-sr-only sm:whitespace-nowrap">新建任务</span>
         </Button>
       </CardFooter>
     </Card>

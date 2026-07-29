@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "总览",
 };
 
 export default async function Dashboard() {
@@ -81,17 +81,17 @@ export default async function Dashboard() {
         <WeeklyBarChartToggle
           charts={[
             {
-              label: "Jobs",
+              label: "岗位",
               data: weeklyData,
               keys: ["value"],
-              axisLeftLegend: "JOBS APPLIED",
+              axisLeftLegend: "投递数",
             },
             {
-              label: "Activities",
+              label: "动态",
               data: activitiesData,
               keys: activitiesDataKeys(activitiesData),
               groupMode: "stacked",
-              axisLeftLegend: "TIME SPENT (Hours)",
+              axisLeftLegend: "时长(小时)",
             },
           ]}
         />

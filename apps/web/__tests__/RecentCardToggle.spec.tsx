@@ -27,7 +27,7 @@ describe("RecentCardToggle - Start Activity", () => {
   };
 
   const switchToActivitiesTab = async () => {
-    await user.click(screen.getByRole("button", { name: "Activities" }));
+    await user.click(screen.getByRole("button", { name: "动态" }));
   };
 
   beforeEach(() => {
@@ -44,7 +44,7 @@ describe("RecentCardToggle - Start Activity", () => {
     renderComponent();
     await switchToActivitiesTab();
 
-    await user.click(screen.getByTitle("Start Activity"));
+    await user.click(screen.getByTitle("开始活动"));
 
     expect(mockStartActivity).toHaveBeenCalledWith("activity-1");
     expect(mockStopActivity).not.toHaveBeenCalled();
@@ -60,11 +60,11 @@ describe("RecentCardToggle - Start Activity", () => {
     renderComponent();
     await switchToActivitiesTab();
 
-    await user.click(screen.getByTitle("Start Activity"));
+    await user.click(screen.getByTitle("开始活动"));
 
     expect(mockStartActivity).not.toHaveBeenCalled();
     expect(
-      await screen.findByText(/"Deep Work" is currently in progress/i)
+      await screen.findByText(/「Deep Work」正在进行中/)
     ).toBeInTheDocument();
   });
 
@@ -78,10 +78,10 @@ describe("RecentCardToggle - Start Activity", () => {
     renderComponent();
     await switchToActivitiesTab();
 
-    await user.click(screen.getByTitle("Start Activity"));
+    await user.click(screen.getByTitle("开始活动"));
 
     const confirmButton = await screen.findByRole("button", {
-      name: "Stop & Start",
+      name: "停止并开始",
     });
     await user.click(confirmButton);
 

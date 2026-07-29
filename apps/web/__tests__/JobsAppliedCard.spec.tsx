@@ -19,7 +19,7 @@ describe("JobsAppliedCard", () => {
     const user = userEvent.setup();
     render(<JobsAppliedCard />);
 
-    await user.click(screen.getByRole("button", { name: /new job/i }));
+    await user.click(screen.getByRole("button", { name: /新建岗位/ }));
 
     expect(mockPush).toHaveBeenCalledWith("/dashboard/myjobs?add-job=true");
   });
@@ -28,7 +28,7 @@ describe("JobsAppliedCard", () => {
     const user = userEvent.setup();
     render(<JobsAppliedCard />);
 
-    await user.click(screen.getByRole("button", { name: /new task/i }));
+    await user.click(screen.getByRole("button", { name: /新建任务/ }));
 
     expect(mockPush).toHaveBeenCalledWith("/dashboard/tasks");
   });

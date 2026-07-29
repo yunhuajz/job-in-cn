@@ -528,7 +528,7 @@ describe("ActivitiesContainer Search Functionality", () => {
       });
 
       await act(async () => {
-        await user.click(screen.getAllByTitle("Start Activity")[0]);
+        await user.click(screen.getAllByTitle("开始活动")[0]);
       });
 
       await waitFor(() => {
@@ -536,7 +536,7 @@ describe("ActivitiesContainer Search Functionality", () => {
       });
       expect(stopActivityById).not.toHaveBeenCalled();
       expect(
-        screen.queryByText(/is currently in progress/i)
+        screen.queryByText(/正在进行中/)
       ).not.toBeInTheDocument();
     });
 
@@ -565,12 +565,12 @@ describe("ActivitiesContainer Search Functionality", () => {
       });
 
       await act(async () => {
-        await user.click(screen.getAllByTitle("Start Activity")[0]);
+        await user.click(screen.getAllByTitle("开始活动")[0]);
       });
 
       expect(startActivityById).not.toHaveBeenCalled();
       expect(
-        await screen.findByText(/"Ongoing Task" is currently in progress/i)
+        await screen.findByText(/「Ongoing Task」正在进行中/)
       ).toBeInTheDocument();
     });
 
@@ -609,11 +609,11 @@ describe("ActivitiesContainer Search Functionality", () => {
       });
 
       await act(async () => {
-        await user.click(screen.getAllByTitle("Start Activity")[0]);
+        await user.click(screen.getAllByTitle("开始活动")[0]);
       });
 
       const confirmButton = await screen.findByRole("button", {
-        name: "Stop & Start",
+        name: "停止并开始",
       });
 
       await act(async () => {

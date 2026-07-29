@@ -184,7 +184,7 @@ function CompaniesTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="company"
+        pageTitle="公司"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteCompany(alert.itemId)}

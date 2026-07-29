@@ -25,35 +25,35 @@ describe("SigninForm Component", () => {
   });
 
   it("renders the SigninForm component correctly", () => {
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    expect(screen.getByLabelText("Password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("邮箱")).toBeInTheDocument();
+    expect(screen.getByLabelText("密码")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /登录/ })).toBeInTheDocument();
   });
 
   it("should display invalid email error", async () => {
-    fireEvent.change(screen.getByLabelText("Email"), {
+    fireEvent.change(screen.getByLabelText("邮箱"), {
       target: { value: "admin" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /登录/ }));
 
     await waitFor(() => {
       expect(
-        screen.getByText("Please enter a valid email.")
+        screen.getByText("请输入有效邮箱。")
       ).toBeInTheDocument();
     });
   });
 
   it("should display number of characters invalid error", async () => {
-    fireEvent.change(screen.getByLabelText("Email"), {
+    fireEvent.change(screen.getByLabelText("邮箱"), {
       target: { value: "ad" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /登录/ }));
 
     await waitFor(() => {
       expect(
-        screen.getByText("Email must be at least 3 characters.")
+        screen.getByText("邮箱至少 3 个字符。")
       ).toBeInTheDocument();
     });
     expect(authenticate).not.toHaveBeenCalled();
@@ -62,14 +62,14 @@ describe("SigninForm Component", () => {
   it("submits the form successfully", async () => {
     (authenticate as any).mockResolvedValueOnce(null);
 
-    fireEvent.change(screen.getByLabelText("Email"), {
+    fireEvent.change(screen.getByLabelText("邮箱"), {
       target: { value: "admin@example.com" },
     });
-    fireEvent.change(screen.getByLabelText("Password"), {
+    fireEvent.change(screen.getByLabelText("密码"), {
       target: { value: "password" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /登录/ }));
 
     await waitFor(() => {
       expect(authenticate).toHaveBeenCalledWith("", expect.any(FormData));
@@ -81,14 +81,14 @@ describe("SigninForm Component", () => {
     const errorMessage = "Invalid credentials";
     (authenticate as any).mockResolvedValueOnce(errorMessage);
 
-    fireEvent.change(screen.getByLabelText("Email"), {
+    fireEvent.change(screen.getByLabelText("邮箱"), {
       target: { value: "admin@example.com" },
     });
-    fireEvent.change(screen.getByLabelText("Password"), {
+    fireEvent.change(screen.getByLabelText("密码"), {
       target: { value: "wrongpassword" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /登录/ }));
 
     await waitFor(() => {
       expect(authenticate).toHaveBeenCalledWith("", expect.any(FormData));

@@ -138,7 +138,7 @@ describe("MyJobsTable", () => {
       renderTable([makeJob()]);
 
       await user.click(screen.getByTestId("job-actions-menu-btn"));
-      await user.click(screen.getByText("View Details"));
+      await user.click(screen.getByText("查看详情"));
 
       expect(mockPush).toHaveBeenCalledWith("/dashboard/myjobs/job-1");
     });
@@ -147,7 +147,7 @@ describe("MyJobsTable", () => {
       const { editJob } = renderTable([makeJob()]);
 
       await user.click(screen.getByTestId("job-actions-menu-btn"));
-      await user.click(screen.getByText("Edit Job"));
+      await user.click(screen.getByText("编辑岗位"));
 
       expect(editJob).toHaveBeenCalledWith("job-1");
     });
@@ -156,7 +156,7 @@ describe("MyJobsTable", () => {
       const { onAddNote } = renderTable([makeJob()]);
 
       await user.click(screen.getByTestId("job-actions-menu-btn"));
-      await user.click(screen.getByText("Add a Note"));
+      await user.click(screen.getByText("添加备注"));
 
       expect(onAddNote).toHaveBeenCalledWith("job-1");
     });
@@ -165,13 +165,13 @@ describe("MyJobsTable", () => {
       const { deleteJob } = renderTable([makeJob()]);
 
       await user.click(screen.getByTestId("job-actions-menu-btn"));
-      await user.click(screen.getByText("Delete"));
+      await user.click(screen.getByText("删除"));
 
       expect(
-        screen.getByText("Are you sure you want to delete this job?"),
+        screen.getByText("确定要删除这条岗位吗？"),
       ).toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: "Delete" }));
+      await user.click(screen.getByRole("button", { name: "删除" }));
 
       expect(deleteJob).toHaveBeenCalledWith("job-1");
     });

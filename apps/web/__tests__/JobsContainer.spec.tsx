@@ -245,7 +245,7 @@ describe("JobsContainer Search Functionality", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByPlaceholderText("Search jobs..."),
+          screen.getByPlaceholderText("搜索岗位…"),
         ).toBeInTheDocument();
       });
     });
@@ -261,11 +261,11 @@ describe("JobsContainer Search Functionality", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByPlaceholderText("Search jobs..."),
+          screen.getByPlaceholderText("搜索岗位…"),
         ).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
 
       await act(async () => {
         await user.type(searchInput, "Amazon");
@@ -287,7 +287,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(getJobsList).toHaveBeenCalledTimes(1);
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
 
       await act(async () => {
         await user.type(searchInput, "A");
@@ -320,7 +320,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(getJobsList).toHaveBeenCalledTimes(1);
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
 
       await act(async () => {
         await user.type(searchInput, "Amazon");
@@ -365,7 +365,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(getJobsList).toHaveBeenCalledTimes(1);
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
 
       // Type to trigger search
       await act(async () => {
@@ -408,12 +408,12 @@ describe("JobsContainer Search Functionality", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByPlaceholderText("Search jobs..."),
+          screen.getByPlaceholderText("搜索岗位…"),
         ).toBeInTheDocument();
       });
 
       // Type in search
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "Developer");
       });
@@ -456,7 +456,7 @@ describe("JobsContainer Search Functionality", () => {
       });
 
       // Type in search
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "Amazon");
       });
@@ -500,7 +500,7 @@ describe("JobsContainer Search Functionality", () => {
       });
 
       // First type in search
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "Developer");
       });
@@ -529,7 +529,7 @@ describe("JobsContainer Search Functionality", () => {
         await user.click(filterTrigger);
       });
 
-      const noneOption = screen.getByRole("option", { name: "None" });
+      const noneOption = screen.getByRole("option", { name: "全部" });
       await act(async () => {
         await user.click(noneOption);
       });
@@ -564,7 +564,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(screen.getByText("Google")).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "Amazon");
       });
@@ -598,7 +598,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(screen.getByText("Amazon")).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "test");
       });
@@ -638,7 +638,7 @@ describe("JobsContainer Search Functionality", () => {
       });
 
       // Type search
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "Developer");
       });
@@ -685,7 +685,7 @@ describe("JobsContainer Search Functionality", () => {
         expect(screen.getByText("Amazon")).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText("Search jobs...");
+      const searchInput = screen.getByPlaceholderText("搜索岗位…");
       await act(async () => {
         await user.type(searchInput, "test");
       });

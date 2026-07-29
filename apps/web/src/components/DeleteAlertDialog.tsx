@@ -28,9 +28,9 @@ export function DeleteAlertDialog({
   onOpenChange,
   onDelete,
   alertTitle,
-  alertDescription = "This action cannot be undone. This will permanently delete and remove data from server.",
+  alertDescription = "此操作无法撤销,数据将从服务器永久删除。",
   deleteAction = true,
-  actionLabel = "Delete",
+  actionLabel = "删除",
   actionVariant = "destructive",
 }: DeleteAlertDialogProps) {
   return (
@@ -38,12 +38,12 @@ export function DeleteAlertDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {alertTitle ?? `Are you sure you want to delete this ${pageTitle}?`}
+            {alertTitle ?? `确定要删除这条${pageTitle}吗？`}
           </AlertDialogTitle>
           <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>取消</AlertDialogCancel>
           {deleteAction && (
             <AlertDialogAction
               className={buttonVariants({ variant: actionVariant })}

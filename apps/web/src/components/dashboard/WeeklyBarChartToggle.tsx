@@ -43,7 +43,7 @@ export default function WeeklyBarChartToggle({
     return newItem;
   });
 
-  const isJobsChart = current.label !== "Activities";
+  const isJobsChart = current.label !== "动态";
   const maxValue = isJobsChart
     ? Math.max(
         0,
@@ -59,7 +59,7 @@ export default function WeeklyBarChartToggle({
     : undefined;
 
   const totalHours =
-    current.label === "Activities"
+    current.label === "动态"
       ? roundedData.reduce(
           (sum, item) =>
             sum +
@@ -78,7 +78,7 @@ export default function WeeklyBarChartToggle({
         <div className="flex items-center justify-between mb-1 mt-3">
           <div className="flex items-baseline gap-2">
             <CardTitle className="text-green-600">
-              Weekly {current.label}
+              本周{current.label}
             </CardTitle>
             {totalHours !== null && (
               <span className="text-sm text-muted-foreground">
@@ -129,7 +129,7 @@ export default function WeeklyBarChartToggle({
             }
             enableTotals={current.groupMode === "stacked" ? true : false}
             valueFormat={(value) =>
-              current.label === "Activities"
+              current.label === "动态"
                 ? value.toFixed(1)
                 : value.toFixed(0)
             }
@@ -207,7 +207,7 @@ export default function WeeklyBarChartToggle({
                     : String(id)}{" "}
                 – {indexValue}:{" "}
                 <strong>
-                  {current.label === "Activities"
+                  {current.label === "动态"
                     ? Number(value).toFixed(1)
                     : value}
                 </strong>

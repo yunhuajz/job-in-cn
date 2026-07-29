@@ -91,7 +91,7 @@ describe("TaskForm Component", () => {
     it("should render the dialog with title 'Add Task'", () => {
       const dialogTitle = screen.getByTestId("task-form-dialog-title");
       expect(dialogTitle).toBeInTheDocument();
-      expect(dialogTitle).toHaveTextContent("Add Task");
+      expect(dialogTitle).toHaveTextContent("新建任务");
     });
 
     it("should show all form fields", () => {
@@ -272,7 +272,7 @@ describe("TaskForm Component", () => {
     it("should render the dialog with title 'Edit Task'", () => {
       const dialogTitle = screen.getByTestId("task-form-dialog-title");
       expect(dialogTitle).toBeInTheDocument();
-      expect(dialogTitle).toHaveTextContent("Edit Task");
+      expect(dialogTitle).toHaveTextContent("编辑任务");
     });
 
     it("should populate form with existing task data", () => {

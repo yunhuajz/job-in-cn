@@ -13,12 +13,7 @@ export function RecordsCount({
 }: RecordsCountProps) {
   return (
     <div className="text-xs text-muted-foreground">
-      Showing{" "}
-      <strong>
-        1 to {count}
-      </strong>{" "}
-      of
-      <strong> {total}</strong> {label}
+      显示 <strong>1–{count}</strong> / 共 <strong>{total}</strong> {label}
     </div>
   );
 }

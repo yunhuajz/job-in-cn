@@ -3,15 +3,15 @@ import { z } from "zod";
 export const SigninFormSchema = z.object({
   email: z
     .string({
-      error: "Email is required.",
+      error: "请填写邮箱。",
     })
     .min(3, {
-      message: "Email must be at least 3 characters.",
+      message: "邮箱至少 3 个字符。",
     })
-    .email("Please enter a valid email."),
+    .email("请输入有效邮箱。"),
   password: z
     .string({
-      error: "Please enter your password.",
+      error: "请输入密码。",
     })
     .min(1),
 });

@@ -158,7 +158,7 @@ function JobLocationsTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="location"
+        pageTitle="地点"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteJobLocation(alert.itemId!)}

@@ -62,7 +62,7 @@ describe("RunHistoryList", () => {
     expect(screen.getAllByText("completed")).toHaveLength(2);
     expect(
       container.textContent?.replace(/\s+/g, " "),
-    ).toContain("Showing 1 to 2 of 5 runs");
+    ).toContain("显示 1–2 / 共 5 runs");
   });
 
   it("does not render the load-more sentinel once every run is loaded", () => {

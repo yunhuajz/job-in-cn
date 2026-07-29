@@ -131,7 +131,7 @@ function TagsTable({ tags, reloadTags }: TagsTableProps) {
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="skill"
+        pageTitle="技能"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteTag(alert.itemId)}

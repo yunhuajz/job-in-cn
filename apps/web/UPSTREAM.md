@@ -38,6 +38,22 @@
 - `src/lib/ajs/seedAjsData.ts` — `AJS_JOB_STATUSES` 补「已批准」(value: approved),design.md §5 批准落状态所需。
 - `__tests__/ajsSeed.spec.ts`、`__tests__/mcpUpdateEvaluation.spec.ts`、`__tests__/mcpSetStatus.spec.ts`、`__tests__/mcpSaveResumeVersion.spec.ts`、`__tests__/mcpAddNote.spec.ts`、`__tests__/mcpListJobs.spec.ts` — 对应测试。
 
+### 2026-07-26 — MCP tool 增至 8 个 + 限流放宽 + 限流熔断
+
+- `src/lib/mcp/tools/getJob.ts`、`addHrReply.ts`、`markGreetingSent.ts` — 新 tool:get_job(取纯文本 JD)、add_hr_reply(HR 回复只读捕获)、mark_greeting_sent(A2 闸:仅 approved 可回写 greetingSentAt)。
+- `src/lib/mcp/tools/listJobs.ts` — 返回行补 `hrReplyAt`/`greetingSentAt`。
+- `src/lib/constants.ts` — `MCP_RATE_LIMIT_MAX` 30 → 300:一轮 boss:harvest 约 100+ 次 add_job,30/小时会把整批打成限流错误。
+- `src/components/myjobs/JobsContainer.tsx` — Filter by 下拉改读 JobStatus 表(原硬编码 applied/interview/...)。
+
+### 2026-07-29 — 界面中文化(用户要求)
+
+- 导航/外壳:`src/lib/constants.ts`(SIDEBAR_LINKS)、`src/components/Sidebar.tsx`、`Header.tsx`、`ProfileDropdown.tsx`。
+- 总览页:`src/app/dashboard/page.tsx`、`src/components/dashboard/*`(JobsAppliedCard/NumberCardToggle/TopActivitiesCard/RecentCardToggle/WeeklyBarChartToggle)。
+- 岗位页:`src/components/myjobs/*`(JobsContainer/MyJobsTable/JobDetails/AddJob)、`src/components/RecordsCount.tsx`、`src/models/addJobForm.schema.ts`(校验文案)。
+- 任务/活动页:`src/components/tasks/TasksTable.tsx`、`TaskForm.tsx`、`src/components/activities/ActivitiesTable.tsx`、`src/hooks/useActivitySwitchConfirm.tsx`、`src/components/DeleteAlertDialog.tsx`。
+- 登录页:`src/components/auth/AuthCard.tsx`、`SigninForm.tsx`、`src/models/signinForm.schema.ts`、`src/app/(auth)/signin/page.tsx`。
+- `__tests__/*` — 同步更新断言为中文文案;admin 深处页面(公司/标签管理等)与 profile 简历模块暂未翻译。
+
 ## 追上游流程
 
 要跟进上游时，用 commit hash 在上游 `git diff <基点hash>..HEAD` 人工评估变更，再决定逐个文件搬入或跳过；本清单中的本地改动需逐条比对避免覆盖。

@@ -78,7 +78,7 @@ describe("DiscoveredJobsList", () => {
     expect(screen.getByText("Backend Engineer")).toBeInTheDocument();
     expect(
       container.textContent?.replace(/\s+/g, " "),
-    ).toContain("Showing 1 to 2 of 5 jobs");
+    ).toContain("显示 1–2 / 共 5 jobs");
   });
 
   it("does not render the load-more sentinel once every job is loaded", () => {

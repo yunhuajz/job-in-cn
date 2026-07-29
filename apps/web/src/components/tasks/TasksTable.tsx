@@ -285,20 +285,20 @@ function TasksTable({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>操作</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => editTask(task.id)}
               >
                 <Pencil className="mr-2 h-4 w-4" />
-                Edit Task
+                编辑任务
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <Tags className="mr-2 h-4 w-4" />
-                  Change Status
+                  变更状态
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="p-0">
@@ -323,7 +323,7 @@ function TasksTable({
                 onClick={() => onStartActivity(task.id)}
               >
                 <CirclePlay className="mr-2 h-4 w-4" />
-                Start Activity
+                开始活动
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -331,7 +331,7 @@ function TasksTable({
                 onClick={() => onDeleteTask(task.id)}
               >
                 <Trash className="mr-2 h-4 w-4" />
-                Delete
+                删除
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

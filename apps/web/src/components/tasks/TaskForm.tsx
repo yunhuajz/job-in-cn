@@ -127,7 +127,7 @@ export function TaskForm({
     });
   }
 
-  const pageTitle = editTask ? "Edit Task" : "Add Task";
+  const pageTitle = editTask ? "编辑任务" : "新建任务";
 
   const closeDialog = () => {
     reset();

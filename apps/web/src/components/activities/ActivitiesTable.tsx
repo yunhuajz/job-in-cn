@@ -72,22 +72,22 @@ function ActivitiesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="hidden md:table-cell">Date</TableHead>
-            <TableHead>Activity</TableHead>
+            <TableHead className="hidden md:table-cell">日期</TableHead>
+            <TableHead>活动</TableHead>
             <TableHead className="whitespace-nowrap">
-              Project
+              项目
               <br />
-              (Activity Type)
+              （活动类型）
             </TableHead>
             <TableHead className="hidden md:table-cell whitespace-nowrap">
-              Start Time
+              开始时间
             </TableHead>
             <TableHead className="hidden md:table-cell whitespace-nowrap">
-              End Time
+              结束时间
             </TableHead>
-            <TableHead>Duration</TableHead>
+            <TableHead>时长</TableHead>
             <TableHead>
-              <span>Actions</span>
+              <span>操作</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -134,27 +134,27 @@ function ActivitiesTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-[200px]">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>操作</DropdownMenuLabel>
                         <DropdownMenuGroup>
                           <DropdownMenuItem
                             className="cursor-pointer text-green-600"
                             onClick={() => onStartActivity(activity.id!)}
                           >
                             <CirclePlay className="mr-2 h-4 w-4" />
-                            Start Activity
+                            开始活动
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600 cursor-pointer"
                             onClick={() => onDeleteActivity(activity.id!)}
                           >
                             <Trash className="mr-2 h-4 w-4" />
-                            Delete
+                            删除
                           </DropdownMenuItem>
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button
-                      title="Start Activity"
+                      title="开始活动"
                       aria-haspopup="true"
                       size="icon"
                       variant="ghost"
@@ -173,7 +173,7 @@ function ActivitiesTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="activity"
+        pageTitle="活动"
         open={alertOpen}
         onOpenChange={setAlertOpen}
         onDelete={deleteActivity}

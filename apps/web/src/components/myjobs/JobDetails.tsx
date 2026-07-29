@@ -198,7 +198,7 @@ function JobDetails({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>操作</DropdownMenuLabel>
               <DropdownMenuGroup>
                 <DropdownMenuItem className="cursor-pointer" onClick={onEditJob}>
                   <Pencil className="mr-2 h-4 w-4" />
@@ -263,7 +263,7 @@ function JobDetails({
                       {parsedMatchData.recommendation}
                     </Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">AI Match</span>
+                    <span className="text-xs text-muted-foreground">AI 匹配</span>
                   )}
                 </div>
               )}
@@ -278,7 +278,7 @@ function JobDetails({
           </CardHeader>
           {job.jobUrl && (
             <div className="my-3 ml-4">
-              <span className="font-semibold mr-2">Job URL:</span>
+              <span className="font-semibold mr-2">职位链接:</span>
               <a
                 href={formatUrl(job.jobUrl)}
                 target="_blank"

@@ -74,18 +74,30 @@ async function main(): Promise<void> {
 
   const limit = cli.limit ?? 15;
   const totals = { added: 0, duplicates: 0, errors: 0 };
-  for (const combo of combos) {
+  for (let i = 0; i < combos.length; i += 1) {
+    const combo = combos[i];
     const label = `${combo.query ?? '为你推荐'} @ ${combo.city ?? '默认城市'}`;
     const report = await harvestJobs({ ...combo, limit });
     printReport(label, report);
     totals.added += report.added.length;
     totals.duplicates += report.duplicates.length;
     totals.errors += report.errors.length;
+    // 账户异常(code=36)属风控信号:立即熔断,剩余组合不再执行
+    if (report.errors.some((e) => /异常行为/.test(e.message))) {
+      console.log(
+        '\n检测到账户异常(风控):整批熔断。请在 Boss App/浏览器里完成验证,今天不再采集。',
+      );
+      break;
+    }
     if (report.abortedByRateLimit) {
       console.log(
         '\njobsync MCP 限流,整批熔断:等限流窗口重置(≤1 小时)后再跑,剩余组合未执行。',
       );
       break;
+    }
+    // 组合之间留间隔,避免连续高频搜索触发风控
+    if (i < combos.length - 1) {
+      await new Promise((r) => setTimeout(r, 15_000));
     }
   }
   console.log(

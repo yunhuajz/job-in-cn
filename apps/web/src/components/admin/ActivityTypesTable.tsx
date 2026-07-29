@@ -148,7 +148,7 @@ function ActivityTypesTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="activity type"
+        pageTitle="活动类型"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteType(alert.itemId)}

@@ -161,7 +161,7 @@ function JobSourcesTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="source"
+        pageTitle="来源"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteJobSource(alert.itemId!)}

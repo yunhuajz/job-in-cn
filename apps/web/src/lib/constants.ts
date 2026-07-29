@@ -160,7 +160,7 @@ export const SIDEBAR_LINKS = [
   {
     icon: LayoutDashboard,
     route: "/dashboard",
-    label: "Dashboard",
+    label: "总览",
   },
   {
     icon: Sun,
@@ -170,32 +170,32 @@ export const SIDEBAR_LINKS = [
   {
     icon: BriefcaseBusiness,
     route: "/dashboard/myjobs",
-    label: "Jobs",
+    label: "岗位",
   },
   {
     icon: Zap,
     route: "/dashboard/automations",
-    label: "Automations",
+    label: "自动化",
   },
   {
     icon: SquareCheckBig,
     route: "/dashboard/tasks",
-    label: "Tasks",
+    label: "任务",
   },
   {
     icon: CalendarClock,
     route: "/dashboard/activities",
-    label: "Activities",
+    label: "动态",
   },
   {
     icon: BookOpen,
     route: "/dashboard/questions",
-    label: "Questions",
+    label: "面试题",
   },
   {
     icon: UserRound,
     route: "/dashboard/profile",
-    label: "Profile",
+    label: "我的",
   },
   {
     icon: Sheet,

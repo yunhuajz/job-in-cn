@@ -78,13 +78,13 @@ function MyJobsTable({
             <TableHead className="hidden w-[100px] sm:table-cell">
               <span className="sr-only">Company Logo</span>
             </TableHead>
-            <TableHead className="hidden md:table-cell">Date Applied</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead className="hidden md:table-cell">Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="hidden md:table-cell">Match</TableHead>
-            <TableHead className="hidden md:table-cell">Source</TableHead>
+            <TableHead className="hidden md:table-cell">投递日期</TableHead>
+            <TableHead>职位</TableHead>
+            <TableHead>公司</TableHead>
+            <TableHead className="hidden md:table-cell">城市</TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead className="hidden md:table-cell">匹配</TableHead>
+            <TableHead className="hidden md:table-cell">来源</TableHead>
             <TableHead>
               <span className="sr-only">Actions</span>
             </TableHead>
@@ -172,34 +172,34 @@ function MyJobsTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[200px]">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>操作</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem
                           className="cursor-pointer"
                           onClick={() => viewJobDetails(job?.id)}
                         >
                           <ListCollapse className="mr-2 h-4 w-4" />
-                          View Details
+                          查看详情
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="cursor-pointer"
                           onClick={() => editJob(job.id)}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit Job
+                          编辑岗位
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="cursor-pointer"
                           onClick={() => onAddNote(job.id)}
                         >
                           <StickyNote className="mr-2 h-4 w-4" />
-                          Add a Note
+                          添加备注
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>
                             <Tags className="mr-2 h-4 w-4" />
-                            Change status
+                            变更状态
                           </DropdownMenuSubTrigger>
                           <DropdownMenuPortal>
                             <DropdownMenuSubContent className="p-0">
@@ -242,7 +242,7 @@ function MyJobsTable({
                           onClick={() => onDeleteJob(job.id)}
                         >
                           <Trash className="mr-2 h-4 w-4" />
-                          Delete
+                          删除
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -254,7 +254,7 @@ function MyJobsTable({
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="job"
+        pageTitle="岗位"
         open={alertOpen}
         onOpenChange={setAlertOpen}
         onDelete={() => deleteJob(jobIdToDelete)}

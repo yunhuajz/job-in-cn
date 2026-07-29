@@ -28,17 +28,17 @@ export function useActivitySwitchConfirm() {
 
   const confirmDialog = (
     <DeleteAlertDialog
-      pageTitle="activity"
+      pageTitle="活动"
       open={pendingAction !== null}
       onOpenChange={(open) => !open && setPendingAction(null)}
       onDelete={confirmSwitch}
-      alertTitle="Stop current activity and start a new one?"
+      alertTitle="停止当前活动并开始新活动？"
       alertDescription={
         currentActivity
-          ? `"${currentActivity.activityName}" is currently in progress. Stop it and start the new activity?`
+          ? `「${currentActivity.activityName}」正在进行中,要停止它并开始新活动吗？`
           : undefined
       }
-      actionLabel="Stop & Start"
+      actionLabel="停止并开始"
       actionVariant="default"
     />
   );

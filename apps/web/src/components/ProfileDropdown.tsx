@@ -50,7 +50,7 @@ export function ProfileDropdown({ user, signOutAction }: ProfileDropdownProps) {
             <DropdownMenuItem>
               <Button variant="ghost" className="w-full">
                 <PowerIcon className="w-5" />
-                <div className="hidden md:block mx-2">Logout</div>
+                <div className="hidden md:block mx-2">退出登录</div>
               </Button>
             </DropdownMenuItem>
           </form>

@@ -19,7 +19,7 @@ export default function AuthCard({ mode }: AuthCardProps) {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight">JobSync</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Track your job search, powered by AI
+          AI 驱动的求职追踪助手
         </p>
       </div>
 
@@ -33,7 +33,7 @@ export default function AuthCard({ mode }: AuthCardProps) {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Sign In
+          登录
         </button>
         <button
           onClick={() => router.push("/signup")}
@@ -43,7 +43,7 @@ export default function AuthCard({ mode }: AuthCardProps) {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Create Account
+          注册
         </button>
       </div>
 
@@ -52,9 +52,9 @@ export default function AuthCard({ mode }: AuthCardProps) {
         {mode === "signin" ? (
           <>
             <div className="mb-5">
-              <h2 className="text-xl font-semibold">Welcome back</h2>
+              <h2 className="text-xl font-semibold">欢迎回来</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Enter your credentials to access your account
+                输入邮箱和密码登录账号
               </p>
             </div>
             <SigninForm />
@@ -62,9 +62,9 @@ export default function AuthCard({ mode }: AuthCardProps) {
         ) : (
           <>
             <div className="mb-5">
-              <h2 className="text-xl font-semibold">Get started</h2>
+              <h2 className="text-xl font-semibold">开始使用</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Create a free account to start tracking your applications
+                创建免费账号,开始追踪你的投递
               </p>
             </div>
             <SignupForm />

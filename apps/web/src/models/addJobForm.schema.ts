@@ -6,40 +6,40 @@ export const AddJobFormSchema = z.object({
   userId: z.string().optional(),
   title: z
     .string({
-      error: "Job title is required.",
+      error: "请填写职位名称。",
     })
     .min(2, {
-      message: "Job title must be at least 2 characters.",
+      message: "职位名称至少 2 个字符。",
     }),
   company: z
     .string({
-      error: "Company name is required.",
+      error: "请填写公司名称。",
     })
     .min(2, {
-      message: "Company name must be at least 2 characters.",
+      message: "公司名称至少 2 个字符。",
     }),
   location: z
     .string({
-      error: "Location is required.",
+      error: "请填写工作地点。",
     })
     .min(2, {
-      message: "Location name must be at least 2 characters.",
+      message: "工作地点至少 2 个字符。",
     }),
   type: z.string().min(1),
   workplaceType: z.string().optional(),
   source: z
     .string({
-      error: "Source is required.",
+      error: "请选择来源。",
     })
     .min(2, {
-      message: "Source name must be at least 2 characters.",
+      message: "来源至少 2 个字符。",
     }),
   status: z
     .string({
-      error: "Status is required.",
+      error: "请选择状态。",
     })
     .min(2, {
-      message: "Status must be at least 2 characters.",
+      message: "状态至少 2 个字符。",
     })
     .default("draft"),
   dueDate: z.date(),
@@ -52,10 +52,10 @@ export const AddJobFormSchema = z.object({
   salaryRange: z.string(),
   jobDescription: z
     .string({
-      error: "Job description is required.",
+      error: "请填写职位描述。",
     })
     .min(10, {
-      message: "Job description must be at least 10 characters.",
+      message: "职位描述至少 10 个字符。",
     }),
   jobUrl: z.string().optional(),
   applied: z.boolean().default(false),

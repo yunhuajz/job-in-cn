@@ -157,7 +157,7 @@ function JobTitlesTable({ jobTitles, reloadJobTitles }: JobTitlesTableProps) {
         </TableBody>
       </Table>
       <DeleteAlertDialog
-        pageTitle="title"
+        pageTitle="职位名"
         open={alert.openState}
         onOpenChange={() => setAlert({ openState: false, deleteAction: false })}
         onDelete={() => deleteJobTitle(alert.itemId!)}

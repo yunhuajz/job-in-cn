@@ -353,12 +353,12 @@ function JobsContainer({
       <Card x-chunk="dashboard-06-chunk-0">
         <CardHeader className="flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           <div className="flex items-baseline gap-2">
-            <CardTitle>Jobs</CardTitle>
+            <CardTitle>岗位</CardTitle>
             {!initialLoading && totalJobs > 0 && (
               <RecordsCount
                 count={jobs.length}
                 total={totalJobs}
-                label="jobs"
+                label="条岗位"
               />
             )}
           </div>
@@ -402,7 +402,7 @@ function JobsContainer({
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Search jobs..."
+              placeholder="搜索岗位…"
             />
             <Select value={filterKey} onValueChange={onFilterChange}>
               <SelectTrigger
@@ -414,17 +414,17 @@ function JobsContainer({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>Filter by</SelectLabel>
+                  <SelectLabel>筛选</SelectLabel>
                   <SelectSeparator />
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">全部</SelectItem>
                   {statuses.map((status) => (
                     <SelectItem key={status.id} value={status.value}>
                       {status.label}
                     </SelectItem>
                   ))}
-                  <SelectItem value="PT">Part-time</SelectItem>
-                  <SelectItem value="accepted">Accepted (discovered)</SelectItem>
-                  <SelectItem value="dismissed">Dismissed (discovered)</SelectItem>
+                  <SelectItem value="PT">兼职</SelectItem>
+                  <SelectItem value="accepted">已接受（自动发现）</SelectItem>
+                  <SelectItem value="dismissed">已忽略（自动发现）</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -437,7 +437,7 @@ function JobsContainer({
             >
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export
+                导出
               </span>
             </Button>
             <AddJob

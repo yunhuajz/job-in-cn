@@ -37,8 +37,8 @@ function groupJobsByDate(jobs: JobResponse[]) {
   const groups = new Map<string, JobResponse[]>();
   for (const job of jobs) {
     const key = job.appliedDate
-      ? format(job.appliedDate, "EEE MMMM d, yyyy")
-      : "No date";
+      ? format(job.appliedDate, "yyyy年M月d日")
+      : "无日期";
     const existing = groups.get(key);
     if (existing) {
       existing.push(job);
@@ -53,8 +53,8 @@ function groupActivitiesByDate(activities: RecentActivity[]) {
   const groups = new Map<string, RecentActivity[]>();
   for (const activity of activities) {
     const key = activity.endTime
-      ? format(activity.endTime, "EEE MMMM d, yyyy")
-      : "In progress";
+      ? format(activity.endTime, "yyyy年M月d日")
+      : "进行中";
     const existing = groups.get(key);
     if (existing) {
       existing.push(activity);
@@ -65,7 +65,7 @@ function groupActivitiesByDate(activities: RecentActivity[]) {
   return Array.from(groups.entries());
 }
 
-const tabs = ["Jobs", "Activities"] as const;
+const tabs = ["岗位", "动态"] as const;
 
 export default function RecentCardToggle({
   jobs,
@@ -80,7 +80,7 @@ export default function RecentCardToggle({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-green-600">
-            Recent {tabs[activeIndex]}
+            最近{tabs[activeIndex]}
           </CardTitle>
           <div
             className="flex rounded-md border text-xs"
@@ -155,7 +155,7 @@ export default function RecentCardToggle({
                       className="group relative flex items-center gap-1"
                     >
                       <Button
-                        title="Start Activity"
+                        title="开始活动"
                         size="icon"
                         variant="ghost"
                         onClick={() => requestStart(() => startActivity(activity.id))}
@@ -170,7 +170,7 @@ export default function RecentCardToggle({
                           {activity.activityName}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {activity.activityType?.label || "Unknown"}
+                          {activity.activityType?.label || "未分类"}
                         </p>
                       </div>
                       <div className="ml-auto text-right shrink-0">

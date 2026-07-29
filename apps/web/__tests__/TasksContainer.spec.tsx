@@ -257,7 +257,7 @@ describe("TasksContainer Component", () => {
           screen.getByTestId("task-form-dialog-title")
         ).toBeInTheDocument();
         expect(screen.getByTestId("task-form-dialog-title")).toHaveTextContent(
-          "Add Task"
+          "新建任务"
         );
       });
     });
@@ -288,13 +288,13 @@ describe("TasksContainer Component", () => {
 
       // Click the Delete menu item
       const deleteMenuItem = await screen.findByRole("menuitem", {
-        name: /delete/i,
+        name: /删除/,
       });
       await user.click(deleteMenuItem);
 
       // Confirm deletion in the alert dialog
       const confirmButton = await screen.findByRole("button", {
-        name: /delete/i,
+        name: /删除/,
       });
       await user.click(confirmButton);
 
@@ -319,13 +319,13 @@ describe("TasksContainer Component", () => {
 
       // Click the Delete menu item
       const deleteMenuItem = await screen.findByRole("menuitem", {
-        name: /delete/i,
+        name: /删除/,
       });
       await user.click(deleteMenuItem);
 
       // Confirm deletion in the alert dialog
       const confirmButton = await screen.findByRole("button", {
-        name: /delete/i,
+        name: /删除/,
       });
       await user.click(confirmButton);
 
@@ -346,14 +346,14 @@ describe("TasksContainer Component", () => {
 
       // Click the Edit Task menu item
       const editMenuItem = await screen.findByRole("menuitem", {
-        name: /edit task/i,
+          name: /编辑任务/,
       });
       await user.click(editMenuItem);
 
       await waitFor(() => {
         expect(getTaskById).toHaveBeenCalledWith("task-1");
         expect(screen.getByTestId("task-form-dialog-title")).toHaveTextContent(
-          "Edit Task"
+          "编辑任务"
         );
       });
     });
@@ -374,7 +374,7 @@ describe("TasksContainer Component", () => {
 
       // Click the Edit Task menu item
       const editMenuItem = await screen.findByRole("menuitem", {
-        name: /edit task/i,
+        name: /编辑任务/,
       });
       await user.click(editMenuItem);
 
@@ -693,9 +693,9 @@ describe("TasksContainer Component", () => {
       render(<TasksContainer activityTypes={mockActivityTypes} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Showing/i)).toBeInTheDocument();
+        expect(screen.getByText(/显示/)).toBeInTheDocument();
         expect(
-          screen.getByText("1 to 2", { exact: false })
+          screen.getByText("1–2", { exact: false })
         ).toBeInTheDocument();
         expect(screen.getByText("10", { exact: false })).toBeInTheDocument();
       });
