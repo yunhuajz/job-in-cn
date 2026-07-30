@@ -125,6 +125,11 @@ export async function listJobs(limit = 50): Promise<JobRow[]> {
   return parseJobRows(text);
 }
 
+export async function listUnscoredJobs(limit = 50): Promise<JobRow[]> {
+  const text = await callMcpTool('list_jobs', { limit, unscoredOnly: true });
+  return parseJobRows(text);
+}
+
 export async function listJobsByStatus(
   status: string,
   limit = 50,

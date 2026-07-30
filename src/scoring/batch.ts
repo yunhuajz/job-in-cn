@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { loadProfile, type CandidateProfile } from '../lib/profile.js';
-import { getJob, listJobs, updateEvaluation } from '../jobsync/mcp.js';
+import { getJob, listUnscoredJobs, updateEvaluation } from '../jobsync/mcp.js';
 import { buildEvaluationReport, scoreJob } from './score.js';
 
 // 批量评分主逻辑(CLI 与 daemon 共用,design.md §2/§4)
@@ -58,7 +58,7 @@ export async function scoreUnscoredJobs(
     model: profile.scoring.model,
   };
 
-  const unscored = (await listJobs(50)).filter((j) => j.matchScore === null);
+  const unscored = await listUnscoredJobs(50);
   const batch = unscored.slice(0, limit);
   const result: ScoreBatchResult = {
     pending: unscored.length,

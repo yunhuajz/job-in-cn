@@ -94,7 +94,7 @@ export const APP_CONSTANTS = {
   MCP_TOKEN_EXPIRY_DEFAULT_DAYS: 90,
   MCP_TOKEN_MAX_PER_USER: 10,
   // AJS: 一轮 boss:harvest 约 100+ 次 add_job,30/小时会把整批打成限流错误
-  MCP_RATE_LIMIT_MAX: 300,
+  MCP_RATE_LIMIT_MAX: 900,
   MCP_RATE_LIMIT_WINDOW_MS: 60 * 60 * 1000,
   MCP_DEFAULT_JOB_TYPE: "Full-time",
   MCP_DEFAULT_STATUS: "draft",

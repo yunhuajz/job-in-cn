@@ -8,7 +8,7 @@ const DEFAULT_LIMIT = 20;
 export const listJobsToolDefinition = {
   name: "list_jobs",
   description:
-    "List the user's jobs (newest first) for the 今日汇总 / 批准清单. Optional filters: status name, minMatchScore (0–100), createdAt since. Returns slim rows: id, jobTitle, company, city, salary, matchScore, weekendRestStatus, status.",
+    "List the user's jobs (newest first) for the 今日汇总 / 批准清单. Optional filters: status name, minMatchScore (0–100), unscoredOnly, createdAt since. Returns slim rows: id, jobTitle, company, city, salary, matchScore, weekendRestStatus, status.",
   inputSchema: McpListJobsSchema,
 } as const;
 
@@ -51,6 +51,7 @@ export async function handleListJobs(
         ...(input.minMatchScore != null
           ? { matchScore: { gte: input.minMatchScore } }
           : {}),
+        ...(input.unscoredOnly ? { matchScore: null } : {}),
         ...(input.since ? { createdAt: { gte: input.since } } : {}),
       },
       orderBy: { createdAt: "desc" },

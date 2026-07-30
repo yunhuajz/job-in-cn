@@ -136,6 +136,10 @@ export const McpListJobsInputShape = {
     .max(100)
     .optional()
     .describe("Only jobs with matchScore >= this value (0–100 scale)."),
+  unscoredOnly: z
+    .boolean()
+    .optional()
+    .describe("Only jobs without a matchScore yet (for the scoring pipeline)."),
   since: z
     .string()
     .datetime({ offset: true })

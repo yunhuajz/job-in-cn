@@ -116,6 +116,20 @@ describe("handleListJobs", () => {
     expect(prisma.job.findMany).not.toHaveBeenCalled();
   });
 
+  it("filters to unscored jobs when unscoredOnly is set", async () => {
+    await handleListJobs({ unscoredOnly: true, since: undefined, limit: 10 }, "user-2", "my-token");
+
+    expect(prisma.job.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId: "user-2",
+          matchScore: null,
+        },
+        take: 10,
+      }),
+    );
+  });
+
   it("maps a null Location to city: null", async () => {
     (prisma.job.findMany as any).mockResolvedValue([
       { ...dbJob, Location: null },

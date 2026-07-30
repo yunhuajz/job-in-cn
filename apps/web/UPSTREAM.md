@@ -54,6 +54,12 @@
 - 登录页:`src/components/auth/AuthCard.tsx`、`SigninForm.tsx`、`src/models/signinForm.schema.ts`、`src/app/(auth)/signin/page.tsx`。
 - `__tests__/*` — 同步更新断言为中文文案;admin 深处页面(公司/标签管理等)与 profile 简历模块暂未翻译。
 
+### 2026-07-30 — list_jobs 增加 unscoredOnly + 限流再放宽
+
+- `src/models/mcp.schema.ts`、`src/lib/mcp/tools/listJobs.ts` — list_jobs 新增 `unscoredOnly` 入参(where: matchScore: null)。原因:评分管线原来取最新 50 条再在客户端过滤,当最新 50 条都已评分时会漏掉历史未评分岗位(实测 95 条未评分被误判为 0)。
+- `src/lib/constants.ts` — `MCP_RATE_LIMIT_MAX` 300 → 900:白天巡逻模式(每小时一轮采集+评分)会超过 300。
+- `__tests__/mcpListJobs.spec.ts` — 补 unscoredOnly 用例。
+
 ## 追上游流程
 
 要跟进上游时，用 commit hash 在上游 `git diff <基点hash>..HEAD` 人工评估变更，再决定逐个文件搬入或跳过；本清单中的本地改动需逐条比对避免覆盖。
