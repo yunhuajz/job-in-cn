@@ -10,6 +10,7 @@
   "scripts": {
     "test": "vitest run",
     "boss:harvest": "tsx src/boss/harvest.ts",
+    "boss:patrol": "tsx src/boss/patrol.ts",
     "boss:sync-replies": "tsx src/boss/sync-replies.ts",
     "boss:greet": "tsx src/boss/greet-jobs.ts",
     "daemon": "tsx src/daemon/index.ts",
