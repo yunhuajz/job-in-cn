@@ -139,6 +139,7 @@ export const getJobsList = async (
           Location: true,
           dueDate: true,
           appliedDate: true,
+          jobUrl: true,
           description: false,
           Resume: true,
           CoverLetter: true,

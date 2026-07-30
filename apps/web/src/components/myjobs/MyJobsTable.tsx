@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "../ui/table";
 import {
+  ExternalLink,
   ListCollapse,
   MoreVertical,
   Pencil,
@@ -112,6 +113,17 @@ function MyJobsTable({
                     <Link href={`/dashboard/myjobs/${job?.id}`} className="block truncate">
                       {job.JobTitle?.label}
                     </Link>
+                    {job.jobUrl && (
+                      <a
+                        href={job.jobUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="打开原始招聘页面"
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
                     {(job._count?.Notes ?? 0) > 0 && (
                       <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 shrink-0">
                         <StickyNote className="h-3 w-3 mr-0.5" />
