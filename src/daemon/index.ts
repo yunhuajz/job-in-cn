@@ -9,7 +9,6 @@ import {
 import { resolve } from 'node:path';
 import { backupDevDb } from './backup.js';
 import { msUntilNextRun } from './schedule.js';
-import { MissingApiKeyError, scoreUnscoredJobs } from '../scoring/batch.js';
 
 // daemon 单进程(design.md §2):定时评分 + 每日备份,不碰浏览器
 // 由 Windows 任务计划程序在登录时启动;npm run daemon
@@ -54,16 +53,8 @@ function releasePid(): void {
 
 async function runCycle(reason: string): Promise<void> {
   log(`运行周期开始(${reason})`);
-  try {
-    const result = await scoreUnscoredJobs(50);
-    log(`评分:待评 ${result.pending} · 成功 ${result.done} · 失败 ${result.failed}`);
-  } catch (error) {
-    if (error instanceof MissingApiKeyError) {
-      log(`评分跳过:${error.message}`);
-    } else {
-      log(`评分异常:${(error as Error).message}`);
-    }
-  }
+  // DeepSeek 评分已停用(2026-07-30):改由 Codex 会话内模型直接打分
+  log('评分:DeepSeek 已停用,留待会话内模型打分(score:dump/score:apply)');
   try {
     const backup = backupDevDb(DEV_DB, BACKUPS_DIR);
     log(

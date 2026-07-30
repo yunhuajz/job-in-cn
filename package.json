@@ -17,6 +17,8 @@
     "boss:greet": "tsx src/boss/greet-jobs.ts",
     "daemon": "tsx src/daemon/index.ts",
     "score": "tsx src/scoring/run.ts",
+    "score:dump": "tsx src/scoring/dump-unscored.ts",
+    "score:apply": "tsx src/scoring/apply-scores.ts",
     "profile:check": "tsx src/lib/profile-check.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"

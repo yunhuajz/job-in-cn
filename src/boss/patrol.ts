@@ -15,11 +15,8 @@ const BOSS_HARVEST_TIMEOUT_MS = 45 * 60_000;
 const JOB51_HARVEST_TIMEOUT_MS = 75 * 60_000;
 const ZHAOPIN_HARVEST_TIMEOUT_MS = 60 * 60_000;
 const PROBE_TIMEOUT_MS = 10 * 60_000;
-const SCORE_TIMEOUT_MS = 15 * 60_000;
 const REST_BETWEEN_CYCLES_MS = 15 * 60_000;
 const RISK_COOLDOWN_MS = 45 * 60_000;
-const MAX_SCORE_ROUNDS_PER_CYCLE = 5;
-
 // 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向、智联连续空结果熔断
 const RISK_PATTERN = /异常行为|风控|AUTH_REQUIRED/;
 
@@ -81,10 +78,9 @@ function runScript(
 }
 
 async function scoreUntilClear(): Promise<void> {
-  for (let round = 0; round < MAX_SCORE_ROUNDS_PER_CYCLE; round += 1) {
-    const { output } = await runScript('src/scoring/run.ts', [], SCORE_TIMEOUT_MS);
-    if (output.includes('没有未评分')) return;
-  }
+  // DeepSeek 评分已停用(2026-07-30):改由 Codex 会话内模型直接打分,
+  // 流程:npm run score:dump → 会话产出 data/scores.json → npm run score:apply
+  log('评分:DeepSeek 已停用,新职位留待会话内模型打分(score:dump/score:apply)');
 }
 
 async function bossVerified(): Promise<boolean> {
