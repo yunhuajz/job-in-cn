@@ -13,13 +13,14 @@ import { bossWhoami } from './bridge.js';
 const LOG_FILE = resolve('data/patrol.log');
 const BOSS_HARVEST_TIMEOUT_MS = 45 * 60_000;
 const JOB51_HARVEST_TIMEOUT_MS = 75 * 60_000;
+const ZHAOPIN_HARVEST_TIMEOUT_MS = 60 * 60_000;
 const PROBE_TIMEOUT_MS = 10 * 60_000;
 const SCORE_TIMEOUT_MS = 15 * 60_000;
 const REST_BETWEEN_CYCLES_MS = 15 * 60_000;
 const RISK_COOLDOWN_MS = 45 * 60_000;
 const MAX_SCORE_ROUNDS_PER_CYCLE = 5;
 
-// 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向
+// 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向、智联连续空结果熔断
 const RISK_PATTERN = /异常行为|风控|AUTH_REQUIRED/;
 
 function log(message: string): void {
@@ -114,16 +115,20 @@ async function main(): Promise<void> {
     cycle += 1;
     const bossOk = await bossVerified();
     const bossCooling = Date.now() < bossCooldownUntil;
-    // Boss 可用时奇数轮走 Boss、偶数轮走 51job;Boss 不可用/冷却中一律 51job
-    const useBoss = bossOk && !bossCooling && cycle % 2 === 1;
+    // 三源轮换:Boss 可用时每 3 轮采一次 Boss,其余轮 51job/智联交替;
+    // Boss 不可用/冷却中:51job 与智联按奇偶轮交替,采集不中断
+    const useBoss = bossOk && !bossCooling && cycle % 3 === 1;
+    const source = useBoss ? 'boss' : cycle % 2 === 0 ? 'job51' : 'zhaopin';
     log(
       `--- 第 ${cycle} 轮开始:` +
-      (useBoss ? (bossProbeOnly ? 'Boss 轻量探针' : 'Boss 全量轮询') : '51job 轮询') +
+      (source === 'boss'
+        ? bossProbeOnly ? 'Boss 轻量探针' : 'Boss 全量轮询'
+        : source === 'job51' ? '51job 轮询' : '智联轮询') +
       (bossOk ? '' : '(Boss 未通过验证)') +
       ' ---',
     );
 
-    if (useBoss) {
+    if (source === 'boss') {
       const harvest = await runScript(
         'src/boss/harvest.ts',
         bossProbeOnly ? probeArgs : [],
@@ -143,10 +148,15 @@ async function main(): Promise<void> {
         log('Boss 探针成功:风控已解除,下一个 Boss 轮恢复全量');
         bossProbeOnly = false;
       }
-    } else {
+    } else if (source === 'job51') {
       const harvest = await runScript('src/job51/harvest.ts', [], JOB51_HARVEST_TIMEOUT_MS);
       if (harvest.timedOut) {
         log('51job 采集子进程超时已终止,本轮直接进入评分');
+      }
+    } else {
+      const harvest = await runScript('src/zhaopin/harvest.ts', [], ZHAOPIN_HARVEST_TIMEOUT_MS);
+      if (harvest.timedOut) {
+        log('智联采集子进程超时已终止,本轮直接进入评分');
       }
     }
 

@@ -55,7 +55,12 @@ function extractJsonValue(text: string, start: number): string {
   );
 }
 
-const OPENCLI_BIN = process.env.OPENCLI_BIN ?? 'opencli';
+// 直接调 opencli 的 node 入口(npm 全局安装),不经 cmd.exe:
+// cmd 会把参数里的 & 当命令分隔符(实测智联搜索 URL 含 & 时导航停在 about:blank),
+// Node 直调由 libuv 负责 argv 转义,彻底避开 shell 元字符问题。
+const OPENCLI_MAIN_JS =
+  process.env.OPENCLI_MAIN_JS ??
+  'C:/Users/24841/AppData/Roaming/npm/node_modules/@jackwener/opencli/dist/src/main.js';
 
 // 单次 opencli 调用的硬上限:适配器遇到风控页/死页面可能无限等待,
 // 超时让错误浮出水面而不是挂住整个管道(实测 chatlist 正常约 30s)
@@ -65,8 +70,8 @@ const OPENCLI_TIMEOUT_MS = Number(process.env.OPENCLI_TIMEOUT_MS ?? 90_000);
 export function runOpencli(args: string[]): Promise<unknown> {
   return new Promise((resolvePromise, rejectPromise) => {
     execFile(
-      'cmd.exe',
-      ['/c', OPENCLI_BIN, ...args],
+      process.execPath,
+      [OPENCLI_MAIN_JS, ...args],
       { maxBuffer: 16 * 1024 * 1024, timeout: OPENCLI_TIMEOUT_MS },
       (error, stdout, stderr) => {
         if (error && !stdout.trim()) {
