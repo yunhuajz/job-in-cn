@@ -15,6 +15,10 @@ const SCORE_TIMEOUT_MS = 15 * 60_000;
 const REST_BETWEEN_CYCLES_MS = 20 * 60_000;
 const RISK_COOLDOWN_MS = 45 * 60_000;
 const MAX_SCORE_ROUNDS_PER_CYCLE = 5;
+const LOGIN_RETRY_MS = 10 * 60_000;
+
+// 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向
+const RISK_PATTERN = /异常行为|风控|AUTH_REQUIRED/;
 
 function log(message: string): void {
   const line = `[${new Date().toISOString()}] ${message}`;
@@ -84,10 +88,16 @@ async function main(): Promise<void> {
   const hours = parseHours(process.argv.slice(2));
   const deadline = Date.now() + hours * 3_600_000;
 
-  const whoami = await bossWhoami();
-  if (!whoami.loggedIn) {
-    log('Boss 未登录,巡逻退出。请先在 Chrome 登录 www.zhipin.com');
-    process.exit(1);
+  // 未登录/待验证时每 10 分钟重试,等用户手动完成滑块验证
+  for (;;) {
+    const whoami = await bossWhoami().catch(() => ({ loggedIn: false }));
+    if (whoami.loggedIn) break;
+    if (Date.now() + LOGIN_RETRY_MS > deadline) {
+      log('等待登录/验证超时,巡逻退出');
+      process.exit(1);
+    }
+    log('Boss 未通过验证(滑块/登录),10 分钟后重试。请在 Chrome 打开 www.zhipin.com 完成验证');
+    await new Promise((r) => setTimeout(r, LOGIN_RETRY_MS));
   }
   log(`巡逻启动:时长 ${hours} 小时,预计 ${new Date(deadline).toLocaleString('zh-CN')} 结束`);
 
@@ -111,7 +121,7 @@ async function main(): Promise<void> {
     if (harvest.timedOut) {
       log('采集子进程超时已终止,本轮直接进入评分');
     }
-    if (/异常行为|风控/.test(harvest.output)) {
+    if (RISK_PATTERN.test(harvest.output)) {
       const coolMs = Math.min(RISK_COOLDOWN_MS, deadline - Date.now());
       if (coolMs <= 0) break;
       log(
