@@ -72,7 +72,7 @@ async function main(): Promise<void> {
     console.log('未找到画像也未指定参数,收取「为你推荐」一页。');
   }
 
-  const limit = cli.limit ?? 15;
+  const limit = cli.limit ?? 10;
   const totals = { added: 0, duplicates: 0, errors: 0 };
   for (let i = 0; i < combos.length; i += 1) {
     const combo = combos[i];
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
     }
     // 组合之间留间隔,避免连续高频搜索触发风控
     if (i < combos.length - 1) {
-      await new Promise((r) => setTimeout(r, 15_000));
+      await new Promise((r) => setTimeout(r, 45_000));
     }
   }
   console.log(
