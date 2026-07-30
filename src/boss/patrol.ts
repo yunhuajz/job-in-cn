@@ -4,18 +4,20 @@ import { resolve } from 'node:path';
 import { loadProfile } from '../lib/profile.js';
 import { bossWhoami } from './bridge.js';
 
-// 巡逻模式:在指定时长内循环「画像轮询采集 → 评分 → 休息」,
-// 带风控冷却重试(熔断 → 冷却 45 分钟 → 轻量探针 → 恢复)与子进程超时保护。
+// 巡逻模式:在指定时长内循环「采集 → 评分 → 休息」。
+// 双采集源按轮交替:Boss(已验证时) ↔ 51job(无需登录);
+// Boss 未通过验证/风控冷却期间,每轮都走 51job,采集不中断。
+// 风控处理:熔断 → 冷却 45 分钟 → 轻量探针 → 恢复全量。
 // 用法:npm run boss:patrol [-- --hours 4]
 
 const LOG_FILE = resolve('data/patrol.log');
-const HARVEST_TIMEOUT_MS = 45 * 60_000;
+const BOSS_HARVEST_TIMEOUT_MS = 45 * 60_000;
+const JOB51_HARVEST_TIMEOUT_MS = 75 * 60_000;
 const PROBE_TIMEOUT_MS = 10 * 60_000;
 const SCORE_TIMEOUT_MS = 15 * 60_000;
-const REST_BETWEEN_CYCLES_MS = 20 * 60_000;
+const REST_BETWEEN_CYCLES_MS = 15 * 60_000;
 const RISK_COOLDOWN_MS = 45 * 60_000;
 const MAX_SCORE_ROUNDS_PER_CYCLE = 5;
-const LOGIN_RETRY_MS = 10 * 60_000;
 
 // 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向
 const RISK_PATTERN = /异常行为|风控|AUTH_REQUIRED/;
@@ -84,21 +86,18 @@ async function scoreUntilClear(): Promise<void> {
   }
 }
 
+async function bossVerified(): Promise<boolean> {
+  try {
+    const whoami = await bossWhoami();
+    return whoami.loggedIn;
+  } catch {
+    return false;
+  }
+}
+
 async function main(): Promise<void> {
   const hours = parseHours(process.argv.slice(2));
   const deadline = Date.now() + hours * 3_600_000;
-
-  // 未登录/待验证时每 10 分钟重试,等用户手动完成滑块验证
-  for (;;) {
-    const whoami = await bossWhoami().catch(() => ({ loggedIn: false }));
-    if (whoami.loggedIn) break;
-    if (Date.now() + LOGIN_RETRY_MS > deadline) {
-      log('等待登录/验证超时,巡逻退出');
-      process.exit(1);
-    }
-    log('Boss 未通过验证(滑块/登录),10 分钟后重试。请在 Chrome 打开 www.zhipin.com 完成验证');
-    await new Promise((r) => setTimeout(r, LOGIN_RETRY_MS));
-  }
   log(`巡逻启动:时长 ${hours} 小时,预计 ${new Date(deadline).toLocaleString('zh-CN')} 结束`);
 
   const profile = loadProfile();
@@ -109,33 +108,48 @@ async function main(): Promise<void> {
   ];
 
   let cycle = 0;
-  let probeOnly = false;
+  let bossProbeOnly = false;
+  let bossCooldownUntil = 0;
   while (Date.now() < deadline) {
     cycle += 1;
-    log(`--- 第 ${cycle} 轮开始${probeOnly ? '(轻量探针)' : ''} ---`);
-    const harvest = await runScript(
-      'src/boss/harvest.ts',
-      probeOnly ? probeArgs : [],
-      probeOnly ? PROBE_TIMEOUT_MS : HARVEST_TIMEOUT_MS,
+    const bossOk = await bossVerified();
+    const bossCooling = Date.now() < bossCooldownUntil;
+    // Boss 可用时奇数轮走 Boss、偶数轮走 51job;Boss 不可用/冷却中一律 51job
+    const useBoss = bossOk && !bossCooling && cycle % 2 === 1;
+    log(
+      `--- 第 ${cycle} 轮开始:` +
+      (useBoss ? (bossProbeOnly ? 'Boss 轻量探针' : 'Boss 全量轮询') : '51job 轮询') +
+      (bossOk ? '' : '(Boss 未通过验证)') +
+      ' ---',
     );
-    if (harvest.timedOut) {
-      log('采集子进程超时已终止,本轮直接进入评分');
-    }
-    if (RISK_PATTERN.test(harvest.output)) {
-      const coolMs = Math.min(RISK_COOLDOWN_MS, deadline - Date.now());
-      if (coolMs <= 0) break;
-      log(
-        `检测到账户风控熔断:冷却 ${Math.round(coolMs / 60_000)} 分钟后用轻量探针重试` +
-        '(若在 Boss App 里手动完成验证,探针会提前成功)',
+
+    if (useBoss) {
+      const harvest = await runScript(
+        'src/boss/harvest.ts',
+        bossProbeOnly ? probeArgs : [],
+        bossProbeOnly ? PROBE_TIMEOUT_MS : BOSS_HARVEST_TIMEOUT_MS,
       );
-      await new Promise((r) => setTimeout(r, coolMs));
-      probeOnly = true;
-      continue;
+      if (harvest.timedOut) {
+        log('Boss 采集子进程超时已终止,本轮直接进入评分');
+      }
+      if (RISK_PATTERN.test(harvest.output)) {
+        bossCooldownUntil = Date.now() + RISK_COOLDOWN_MS;
+        bossProbeOnly = true;
+        log(
+          `Boss 风控熔断:冷却至 ${new Date(bossCooldownUntil).toLocaleString('zh-CN')},` +
+          '期间每轮走 51job;之后的 Boss 轮先用轻量探针试探',
+        );
+      } else if (bossProbeOnly) {
+        log('Boss 探针成功:风控已解除,下一个 Boss 轮恢复全量');
+        bossProbeOnly = false;
+      }
+    } else {
+      const harvest = await runScript('src/job51/harvest.ts', [], JOB51_HARVEST_TIMEOUT_MS);
+      if (harvest.timedOut) {
+        log('51job 采集子进程超时已终止,本轮直接进入评分');
+      }
     }
-    if (probeOnly) {
-      log('探针成功:风控已解除,下一轮恢复全量轮询');
-      probeOnly = false;
-    }
+
     await scoreUntilClear();
     const remainMs = deadline - Date.now();
     if (remainMs <= 0) break;
