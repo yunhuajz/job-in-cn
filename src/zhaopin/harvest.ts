@@ -1,4 +1,5 @@
 import { loadProfile } from '../lib/profile.js';
+import { requiresGraduateDegree } from '../lib/filters.js';
 import { addJob, type AddJobResult } from '../jobsync/mcp.js';
 import {
   ZHAOPIN_CITY_CODES,
@@ -20,6 +21,7 @@ interface HarvestTotals {
   added: string[];
   duplicates: number;
   skipped: number;
+  degreeSkipped: number;
   errors: Array<{ title: string; message: string }>;
 }
 
@@ -74,6 +76,10 @@ async function harvestCombo(
   const cityCode = city === '远程' ? null : (ZHAOPIN_CITY_CODES[city] ?? null);
   const cards = (await searchZpJobs(tabId, query, cityCode)).slice(0, limit);
   for (const card of cards) {
+    if (requiresGraduateDegree(card.infos.join(' '))) {
+      totals.degreeSkipped += 1;
+      continue;
+    }
     if (city === '远程') {
       const text = `${card.title} ${card.tags.join(' ')} ${card.infos.join(' ')}`;
       if (!text.includes('远程')) {
@@ -126,15 +132,16 @@ async function main(): Promise<void> {
           query: queryIndex >= 0 ? argv[queryIndex + 1] : profile.targetRoles[0],
           city: cityIndex >= 0 ? argv[cityIndex + 1] : profile.preferredCities[0],
         }]
-      : profile.targetRoles.flatMap((query) =>
+      : // 应届友好:除原关键词外,每组城市追加「关键词 应届」组合
+        [...profile.targetRoles, ...profile.targetRoles.map((q) => `${q} 应届`)].flatMap((query) =>
           profile.preferredCities.map((city) => ({ query, city })),
         );
   console.log(
-    `智联按画像轮询:${profile.targetRoles.length} 个关键词 × ${combos.length} 组(薪资下限 ${salaryFloor / 1000}K)`,
+    `智联按画像轮询:${combos.length} 组(含应届组合,薪资下限 ${salaryFloor / 1000}K)`,
   );
 
   const tabId = await openZpTab();
-  const totals: HarvestTotals = { added: [], duplicates: 0, skipped: 0, errors: [] };
+  const totals: HarvestTotals = { added: [], duplicates: 0, skipped: 0, degreeSkipped: 0, errors: [] };
   let emptyStreak = 0;
   try {
     for (let i = 0; i < combos.length; i += 1) {
@@ -151,7 +158,7 @@ async function main(): Promise<void> {
         totals.errors.push({ title: `${query} @ ${city}`, message: (error as Error).message });
       }
       console.log(
-        `[${query} @ ${city}] 累计:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 跳过 ${totals.skipped} · 异常 ${totals.errors.length}`,
+        `[${query} @ ${city}] 累计:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 跳过 ${totals.skipped} · 学历跳过 ${totals.degreeSkipped} · 异常 ${totals.errors.length}`,
       );
       if (i < combos.length - 1) {
         await new Promise((r) => setTimeout(r, COMBO_INTERVAL_MS));
@@ -161,7 +168,7 @@ async function main(): Promise<void> {
     await closeZpTab(tabId);
   }
   console.log(
-    `\n智联收取完成:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 跳过 ${totals.skipped} · 异常 ${totals.errors.length}`,
+    `\n智联收取完成:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 跳过 ${totals.skipped} · 学历跳过 ${totals.degreeSkipped} · 异常 ${totals.errors.length}`,
   );
 }
 

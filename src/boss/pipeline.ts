@@ -6,6 +6,7 @@ import {
   type BossJobDetail,
 } from './map.js';
 import { addJob, type AddJobResult } from '../jobsync/mcp.js';
+import { requiresGraduateDegree } from '../lib/filters.js';
 
 // 去重 + 落库管道(plan.md 1.6):搜索 → 逐条详情 → add_job(URL 服务端去重)
 
@@ -26,6 +27,8 @@ export interface HarvestReport {
   added: Array<{ jobId: string; title: string; jobSyncId: string }>;
   duplicates: Array<{ jobId: string; title: string }>;
   errors: HarvestItemError[];
+  // 学历要求为硕士/博士的卡片直接跳过(候选人为本科)
+  degreeSkipped: Array<{ jobId: string; title: string }>;
   // jobsync MCP 限流时整批熔断:继续刷只会把后续组合全部打成错误
   abortedByRateLimit?: boolean;
 }
@@ -46,8 +49,17 @@ export async function harvestJobs(
   deps: HarvestDeps = defaultDeps,
 ): Promise<HarvestReport> {
   const cards = await deps.search(options);
-  const report: HarvestReport = { added: [], duplicates: [], errors: [] };
+  const report: HarvestReport = {
+    added: [],
+    duplicates: [],
+    errors: [],
+    degreeSkipped: [],
+  };
   for (const card of cards) {
+    if (requiresGraduateDegree(card.degree)) {
+      report.degreeSkipped.push({ jobId: card.jobId, title: card.title });
+      continue;
+    }
     let detail: BossJobDetail | null = null;
     try {
       detail = await deps.detail(card.securityId);

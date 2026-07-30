@@ -30,7 +30,7 @@ function parseCliArgs(argv: string[]): CliArgs {
 
 function printReport(label: string, report: HarvestReport): void {
   console.log(
-    `\n[${label}] 新入库 ${report.added.length} · 重复跳过 ${report.duplicates.length} · 异常 ${report.errors.length}`,
+    `\n[${label}] 新入库 ${report.added.length} · 重复跳过 ${report.duplicates.length} · 学历跳过 ${report.degreeSkipped.length} · 异常 ${report.errors.length}`,
   );
   for (const item of report.added) {
     console.log(`  + ${item.title} (${item.jobSyncId})`);

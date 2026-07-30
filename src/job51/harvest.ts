@@ -1,4 +1,5 @@
 import { loadProfile } from '../lib/profile.js';
+import { requiresGraduateDegree } from '../lib/filters.js';
 import { addJob, type AddJobResult } from '../jobsync/mcp.js';
 import { get51JobDescription, search51Jobs, type Job51Card } from './bridge.js';
 
@@ -14,6 +15,7 @@ interface HarvestTotals {
   added: string[];
   duplicates: number;
   skipped: number;
+  degreeSkipped: number;
   errors: Array<{ title: string; message: string }>;
 }
 
@@ -48,6 +50,10 @@ async function harvestCombo(
 ): Promise<void> {
   const cards = await search51Jobs(query, area, limit);
   for (const card of cards) {
+    if (requiresGraduateDegree(card.degree)) {
+      totals.degreeSkipped += 1;
+      continue;
+    }
     if (card.salaryMax !== undefined && card.salaryMax < salaryFloor) {
       totals.skipped += 1;
       continue;
@@ -97,14 +103,15 @@ async function main(): Promise<void> {
   const combos =
     cliQuery || cliCity
       ? [{ query: cliQuery ?? profile.targetRoles[0], city: cliCity ?? cities[0] }]
-      : profile.targetRoles.flatMap((query) =>
+      : // 应届友好:除原关键词外,每组城市追加「关键词 应届」组合,扩大校招/初级岗位覆盖
+        [...profile.targetRoles, ...profile.targetRoles.map((q) => `${q} 应届`)].flatMap((query) =>
           cities.map((city) => ({ query, city })),
         );
   console.log(
-    `51job 按画像轮询:${profile.targetRoles.length} 个关键词 × ${cities.length} 个城市 = ${combos.length} 组(薪资下限 ${salaryFloor / 1000}K)`,
+    `51job 按画像轮询:${combos.length} 组(含应届组合,薪资下限 ${salaryFloor / 1000}K)`,
   );
 
-  const totals: HarvestTotals = { added: [], duplicates: 0, skipped: 0, errors: [] };
+  const totals: HarvestTotals = { added: [], duplicates: 0, skipped: 0, degreeSkipped: 0, errors: [] };
   for (let i = 0; i < combos.length; i += 1) {
     const { query, city } = combos[i];
     try {
@@ -113,14 +120,14 @@ async function main(): Promise<void> {
       totals.errors.push({ title: `${query} @ ${city}`, message: (error as Error).message });
     }
     console.log(
-      `[${query} @ ${city}] 累计:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 薪资跳过 ${totals.skipped} · 异常 ${totals.errors.length}`,
+      `[${query} @ ${city}] 累计:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 薪资跳过 ${totals.skipped} · 学历跳过 ${totals.degreeSkipped} · 异常 ${totals.errors.length}`,
     );
     if (i < combos.length - 1) {
       await new Promise((r) => setTimeout(r, COMBO_INTERVAL_MS));
     }
   }
   console.log(
-    `\n51job 收取完成:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 薪资跳过 ${totals.skipped} · 异常 ${totals.errors.length}`,
+    `\n51job 收取完成:新入库 ${totals.added.length} · 重复 ${totals.duplicates} · 薪资跳过 ${totals.skipped} · 学历跳过 ${totals.degreeSkipped} · 异常 ${totals.errors.length}`,
   );
 }
 
