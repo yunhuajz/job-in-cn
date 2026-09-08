@@ -3,8 +3,30 @@ import { bossDetail, bossSearch, bossWhoami } from '../boss/bridge.js';
 import { toAddJobInput, type AddJobInput } from '../boss/map.js';
 import { get51JobDescription, search51Jobs } from '../job51/bridge.js';
 import { closeZpTab, getZpJobDescription, openZpTab, searchZpJobs, ZHAOPIN_CITY_CODES } from '../zhaopin/bridge.js';
-import type { CrawlerConfig } from './config.js';
+import type { CrawlerConfig, ExperienceOption } from './config.js';
 import type { GroupSource } from './plan-run.js';
+
+export function toBossExperience(option?: ExperienceOption): string | undefined {
+  switch (option) {
+    case 'fresh': return '应届生(校招)';
+    case '1year': return '1年以内';
+    case '1-3': return '1-3年';
+    case '3-5': return '3-5年';
+    case '5-10': return '5-10年';
+    default: return undefined;
+  }
+}
+
+export function to51JobExperience(option?: ExperienceOption): string | undefined {
+  switch (option) {
+    case 'fresh': return '应届';
+    case '1year': return '1年以内';
+    case '1-3': return '1-3年';
+    case '3-5': return '3-5年';
+    case '5-10': return '5-7年';
+    default: return undefined;
+  }
+}
 
 export type KnownUrl = (url: string) => Promise<boolean>;
 
@@ -30,7 +52,13 @@ export async function* collectJobs(config: CrawlerConfig, signal: AbortSignal, l
       log(`搜索 ${index + 1}/${combos.length}：${query} · ${city}`);
       let jobs: Array<() => Promise<AddJobInput>>;
       if (config.platform === 'boss') {
-        const cards = await keepUnseen(await bossSearch({ query, city: city === '全国' || city === '远程' ? undefined : city, limit: config.limit, page }), (card) => card.url, isKnown);
+        const cards = await keepUnseen(await bossSearch({
+          query,
+          city: city === '全国' || city === '远程' ? undefined : city,
+          experience: toBossExperience(config.experience),
+          limit: config.limit,
+          page,
+        }), (card) => card.url, isKnown);
         jobs = cards.slice(0, config.limit).map((card) => async () => {
           const detail = await bossDetail(card.securityId);
           const input = toAddJobInput(card, detail);
@@ -39,12 +67,19 @@ export async function* collectJobs(config: CrawlerConfig, signal: AbortSignal, l
           return input;
         });
       } else if (config.platform === 'job51') {
-        const cards = await keepUnseen(await search51Jobs(query, city === '远程' ? '全国' : city, config.limit, page), (card) => card.url, isKnown);
+        const cards = await keepUnseen(await search51Jobs(
+          query,
+          city === '远程' ? '全国' : city,
+          config.limit,
+          page,
+          to51JobExperience(config.experience),
+        ), (card) => card.url, isKnown);
         jobs = cards.slice(0, config.limit).map((card) => async () => ({
           company: card.companyFull ?? card.company, jobTitle: card.title,
           jobDescription: `${await get51JobDescription(card.jobId) ?? '详情未获取，仅保留搜索页信息。'}\n${card.tags ?? ''}\n${card.degree ?? ''} ${card.workYear ?? ''}`,
           location: [card.city, card.district].filter(Boolean).join(' '), source: '前程无忧51job',
           jobUrl: card.url, salaryRange: card.salary, tags: (card.tags ?? '').split(',').filter(Boolean).slice(0, 5),
+          experience: card.workYear,
         }));
       } else {
         const code = ZHAOPIN_CITY_CODES[city] ?? (/^\d+$/.test(city) ? city : null);
@@ -55,6 +90,7 @@ export async function* collectJobs(config: CrawlerConfig, signal: AbortSignal, l
           company: card.company, jobTitle: card.title,
           jobDescription: `${card.description || await getZpJobDescription(tab!, card.url) || '详情未获取，仅保留搜索页信息。'}\n${card.tags.join(' ')}\n${card.infos.join(' ')}`,
           location: card.infos[0] ?? '', source: '智联招聘', jobUrl: card.url, salaryRange: card.salary, tags: card.tags.slice(0, 5),
+          experience: card.infos.find((info) => /经验|应届|年/.test(info)) ?? '',
         }));
       }
       log(`本组返回 ${jobs.length} 个岗位`);

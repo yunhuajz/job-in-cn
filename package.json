@@ -1,8 +1,8 @@
 {
-  "name": "job-for-claude",
+  "name": "job-in-cn",
   "version": "0.1.0",
   "private": true,
-  "description": "以 Claude Code 为中心的个人 AI 求职系统(Boss 直聘优先)",
+  "description": "JBCN (Job in CN) - 面向国内主流招聘平台的个人 AI 智能求职与投递助手",
   "type": "module",
   "engines": {
     "node": ">=22"

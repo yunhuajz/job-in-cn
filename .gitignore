@@ -23,7 +23,8 @@ apps/web/prisma/dev.db*
 apps/web/.env*
 !apps/web/.env.example
 
-# os / editor
+# os / editor / logs
+*.log
 .DS_Store
 Thumbs.db
 .vscode/

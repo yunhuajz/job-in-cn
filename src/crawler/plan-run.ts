@@ -132,7 +132,7 @@ export class CrawlPlanRun {
                 if (signal.aborted) return;
                 const job = next.value;
                 this.state.visited += 1;
-                if (!matchesPreferences({ salary: job.salaryRange, location: job.location, description: job.jobDescription }, config)) {
+                if (!matchesPreferences({ salary: job.salaryRange, location: job.location, description: job.jobDescription, experience: job.experience }, config)) {
                   this.state.skipped += 1;
                   continue;
                 }

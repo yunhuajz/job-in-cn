@@ -138,10 +138,11 @@ export const validateText = (
     };
   }
 
-  // Check for corruption - consecutive special characters
+  // Check for corruption - consecutive special characters (Unicode letters \p{L}, digits \p{N}, and whitespace are preserved)
   const MAX_CONSECUTIVE_SPECIAL_CHARS = 20;
   const specialCharPattern = new RegExp(
-    `[^a-zA-Z0-9\\s]{${MAX_CONSECUTIVE_SPECIAL_CHARS + 1},}`,
+    `[^\\p{L}\\p{N}\\s]{${MAX_CONSECUTIVE_SPECIAL_CHARS + 1},}`,
+    "u",
   );
   if (specialCharPattern.test(text)) {
     return {

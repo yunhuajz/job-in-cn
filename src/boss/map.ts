@@ -64,6 +64,7 @@ export interface AddJobInput {
   jobUrl: string;
   salaryRange: string;
   tags: string[];
+  experience?: string;
 }
 
 export function extractJobId(url: string): string | null {
@@ -141,5 +142,6 @@ export function toAddJobInput(
     jobUrl: card.url,
     salaryRange: card.salary,
     tags: card.skills.slice(0, MAX_TAGS),
+    experience: card.experience,
   };
 }

@@ -50,7 +50,7 @@ export class CrawlRun {
       for await (const job of this.source(config, signal, this.log)) {
         if (signal.aborted) break;
         this.state.visited += 1;
-        if (!matchesPreferences({ salary: job.salaryRange, location: job.location, description: job.jobDescription }, config)) {
+        if (!matchesPreferences({ salary: job.salaryRange, location: job.location, description: job.jobDescription, experience: job.experience }, config)) {
           this.state.skipped += 1;
           this.log(`条件不符：${job.jobTitle}`);
           continue;

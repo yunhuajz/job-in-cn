@@ -7,12 +7,23 @@ export interface AiSettings {
   baseURL?: string;
 }
 
+export interface AiProfile {
+  id: string;
+  name: string;
+  protocol: "responses" | "chat" | "anthropic";
+  baseURL: string;
+  model: string;
+  isActive: boolean;
+}
+
 export interface DisplaySettings {
   theme: "light" | "dark" | "system";
 }
 
 export interface UserSettingsData {
   ai: AiSettings;
+  aiProfiles?: AiProfile[];
+  activeProfileId?: string;
   display: DisplaySettings;
 }
 

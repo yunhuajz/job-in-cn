@@ -1,5 +1,6 @@
 "use client";
 import type { JobPreferences } from "@/lib/local/preferences";
+import { experiences, experienceNames } from "@/lib/local/preferences";
 
 export const fieldClass = "mt-2 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm font-normal shadow-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50";
 
@@ -11,6 +12,13 @@ export default function PreferenceFields({ value, onChange }: {
   return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     <label className="text-sm font-medium">具体地点
       <input className={fieldClass} value={value.location} placeholder="区、街道或地址关键词，不限则留空" onChange={(e) => set({ location: e.target.value })} />
+    </label>
+    <label className="text-sm font-medium">工作年限
+      <select className={fieldClass} value={value.experience ?? 'any'} onChange={(e) => set({ experience: e.target.value as JobPreferences['experience'] })}>
+        {experiences.map((exp) => (
+          <option key={exp} value={exp}>{experienceNames[exp]}</option>
+        ))}
+      </select>
     </label>
     <label className="text-sm font-medium">薪资匹配方式
       <select className={fieldClass} value={value.salaryMode} onChange={(e) => set({ salaryMode: e.target.value as JobPreferences['salaryMode'] })}>

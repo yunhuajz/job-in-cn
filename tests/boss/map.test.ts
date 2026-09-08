@@ -92,6 +92,7 @@ describe('toAddJobInput', () => {
       jobUrl: card.url,
       salaryRange: '25-35K',
       tags: [],
+      experience: '1-3年',
     });
   });
 

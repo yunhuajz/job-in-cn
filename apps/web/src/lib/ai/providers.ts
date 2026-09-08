@@ -15,11 +15,24 @@ export async function getModel(
   if (provider === "openai-compatible") {
     const apiKey = await resolveApiKey(userId, provider);
     if (!apiKey) throw new Error("API Key 尚未配置");
-    if (!options?.baseURL) throw new Error("Base URL 尚未配置");
-    const baseURL = options.baseURL.replace(/\/+$/, "");
-    if (options.protocol === "anthropic") return createAnthropic({ apiKey, baseURL: /\/anthropic$/i.test(baseURL) ? `${baseURL}/v1` : baseURL })(modelName);
-    const client = createOpenAI({ apiKey, baseURL });
-    return options.protocol === "chat" ? client.chat(modelName) : client.responses(modelName);
+    let baseURL = options?.baseURL;
+    let protocol = options?.protocol;
+    if (!baseURL && userId) {
+      const db = (await import("@/lib/db")).default;
+      const row = await db.userSettings.findUnique({ where: { userId }, select: { settings: true } });
+      if (row) {
+        const parsed = JSON.parse(row.settings);
+        const activeProfile = parsed.aiProfiles?.find((p: any) => p.isActive) || parsed.aiProfiles?.[0];
+        baseURL = activeProfile?.baseURL || parsed.ai?.baseURL;
+        protocol = protocol || activeProfile?.protocol || parsed.ai?.protocol;
+      }
+    }
+    if (!baseURL) throw new Error("Base URL 尚未配置");
+    protocol = protocol || "chat";
+    const cleanBaseURL = baseURL.replace(/\/+$/, "");
+    if (protocol === "anthropic") return createAnthropic({ apiKey, baseURL: /\/anthropic$/i.test(cleanBaseURL) ? `${cleanBaseURL}/v1` : cleanBaseURL })(modelName);
+    const client = createOpenAI({ apiKey, baseURL: cleanBaseURL });
+    return protocol === "responses" ? client.responses(modelName) : client.chat(modelName);
   }
   const entry = PROVIDER_REGISTRY[provider];
   if (!entry) throw new Error(`Unknown AI provider: ${provider}`);

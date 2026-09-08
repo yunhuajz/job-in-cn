@@ -38,9 +38,12 @@ export async function search51Jobs(
   area: string,
   limit: number,
   page = 1,
-  run: OpencliRunner = runOpencli,
+  experienceOrRun?: string | OpencliRunner,
+  runner?: OpencliRunner,
 ): Promise<Job51Card[]> {
-  const result = await run([
+  const experience = typeof experienceOrRun === 'string' ? experienceOrRun : undefined;
+  const run = typeof experienceOrRun === 'function' ? experienceOrRun : (runner ?? runOpencli);
+  const args = [
     '51job',
     'search',
     query,
@@ -50,8 +53,10 @@ export async function search51Jobs(
     String(limit),
     '--page',
     String(page),
-    ...SESSION_ARGS,
-  ]);
+  ];
+  if (experience) args.push('--experience', experience);
+  args.push(...SESSION_ARGS);
+  const result = await run(args);
   return Array.isArray(result) ? (result as Job51Card[]) : [];
 }
 

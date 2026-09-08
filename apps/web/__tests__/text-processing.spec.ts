@@ -304,4 +304,10 @@ describe("validateText", () => {
     const result = validateText(text, 200, 50000);
     expect(result.isValid).toBe(true);
   });
+
+  it("allows Chinese text without treating characters as special characters", () => {
+    const chineseText = "河北经贸大学人工智能专业本科毕业生，熟练掌握大语言模型应用开发与多智能体系统构建。".repeat(5);
+    const result = validateText(chineseText, 20, 50000);
+    expect(result.isValid).toBe(true);
+  });
 });

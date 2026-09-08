@@ -7,6 +7,19 @@ export const platformNames: Record<Platform, string> = {
 };
 
 const terms = z.array(z.string().trim().min(1).max(100)).min(1).max(20);
+
+export const experiences = ['any', 'fresh', '1year', 'fresh_or_1year', '1-3', '3-5', '5-10'] as const;
+export type ExperienceOption = (typeof experiences)[number];
+export const experienceNames: Record<ExperienceOption, string> = {
+  any: '经验不限',
+  fresh: '在校/应届生',
+  '1year': '1年以内',
+  fresh_or_1year: '应届或1年以内',
+  '1-3': '1-3年',
+  '3-5': '3-5年',
+  '5-10': '5-10年',
+};
+
 export const crawlerConfigSchema = z.object({
   platform: z.enum(platforms).default('boss'),
   keywords: terms,
@@ -16,6 +29,7 @@ export const crawlerConfigSchema = z.object({
   salaryMax: z.number().min(0).max(1000000).default(0),
   salaryMode: z.enum(['minimum', 'overlap']).default('minimum'),
   weekend: z.enum(['any', 'yes', 'no']).default('any'),
+  experience: z.enum(experiences).default('any'),
   keepUnknown: z.boolean().default(true),
   limit: z.number().int().min(1).max(50).default(10),
 }).refine((c) => c.salaryMode !== 'overlap' || c.salaryMax === 0 || c.salaryMax >= c.salaryMin, {
@@ -35,6 +49,7 @@ export interface JobPreferences {
   salaryMax: number;
   salaryMode: 'minimum' | 'overlap';
   weekend: 'any' | 'yes' | 'no';
+  experience?: ExperienceOption;
   keepUnknown: boolean;
 }
 
@@ -57,8 +72,29 @@ export function weekendStatus(text: string, confirmed?: string | null): 'yes' | 
   return 'unknown';
 }
 
+export function experienceStatus(text: string, confirmed?: string | null): ExperienceOption | 'unlimited' | 'unknown' {
+  const confirmedText = confirmed?.trim();
+  if (confirmedText) {
+    if (/在校|应届|校招|毕业生|实习生|无需经验|无经验/.test(confirmedText)) return 'fresh';
+    if (/1年以内|一年以内|^1年$|^一年$|半年/.test(confirmedText)) return '1year';
+    if (/1-3年|1~3年|1至3年|1到3年|2年/.test(confirmedText)) return '1-3';
+    if (/3-5年|3~5年|3至5年|3到5年|4年/.test(confirmedText)) return '3-5';
+    if (/10年以上|8-9年|5-10年|5-7年|5年以上|5年及以上|五年以上/.test(confirmedText)) return '5-10';
+    if (/经验不限|不限经验/.test(confirmedText)) return 'unlimited';
+    return 'unknown';
+  }
+  if (!text.trim()) return 'unknown';
+  if (/在校|应届|校招|毕业生|实习生|无需经验|无经验/.test(text)) return 'fresh';
+  if (/10年以上|8-9年|5-10年|5-7年|5年以上|5年及以上|五年以上/.test(text)) return '5-10';
+  if (/3-5年|3~5年|3至5年|3到5年|4年/.test(text)) return '3-5';
+  if (/1-3年|1~3年|1至3年|1到3年|2年/.test(text)) return '1-3';
+  if (/1年以内|一年以内|^1年$|^一年$|半年/.test(text)) return '1year';
+  if (/经验不限|不限经验/.test(text)) return 'unlimited';
+  return 'unknown';
+}
+
 export function matchesPreferences(job: {
-  salary?: string | null; location?: string | null; description?: string; weekend?: string | null;
+  salary?: string | null; location?: string | null; description?: string; weekend?: string | null; experience?: string | null;
 }, config: JobPreferences): boolean {
   if (config.location) {
     if (!job.location && !config.keepUnknown) return false;
@@ -74,6 +110,15 @@ export function matchesPreferences(job: {
     const status = weekendStatus(job.description ?? '', job.weekend);
     if (status === 'unknown') return config.keepUnknown;
     if (status !== config.weekend) return false;
+  }
+  if (config.experience && config.experience !== 'any') {
+    const status = experienceStatus(job.description ?? '', job.experience);
+    if (status === 'unknown') return config.keepUnknown;
+    if (config.experience === 'fresh_or_1year') {
+      if (status !== 'fresh' && status !== '1year' && status !== 'unlimited') return false;
+    } else if (status !== config.experience && status !== 'unlimited') {
+      return false;
+    }
   }
   return true;
 }

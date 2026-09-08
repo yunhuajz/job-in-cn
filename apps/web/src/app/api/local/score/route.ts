@@ -3,7 +3,8 @@ import "server-only";
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
 import { getDefaultResumeForUser } from "@/lib/jobs/getDefaultResumeForUser";
-import { buildJobMatchPrompt, JOB_MATCH_SYSTEM_PROMPT, parseJobMatch, preprocessResume } from "@/lib/ai";
+import { buildJobMatchPrompt, JOB_MATCH_SYSTEM_PROMPT, parseJobMatch, preprocessResume, preprocessText } from "@/lib/ai";
+import { extractResumeFileText } from "@/lib/jobs/extractResumeFileText";
 import { getModel, type ProviderType } from "@/lib/ai/providers";
 import { defaultUserSettings, type UserSettingsData } from "@/models/userSettings.model";
 import { generateText } from "ai";
@@ -20,12 +21,30 @@ export async function POST(request: Request) {
     const { ids } = z.object({ ids: z.array(z.string().uuid()).min(1).max(10) }).parse(await request.json());
     const row = await prisma.userSettings.findUnique({ where: { userId }, select: { settings: true } });
     const settings: UserSettingsData = row ? { ...defaultUserSettings, ...JSON.parse(row.settings) } : defaultUserSettings;
-    if (!settings.ai.model) throw new Error("请先在“AI 设置”中选择评分模型");
+    const activeProfile = settings.aiProfiles?.find((p) => p.isActive) || settings.aiProfiles?.[0];
+    const targetModel = activeProfile?.model || settings.ai.model;
+    const targetBaseURL = activeProfile?.baseURL || settings.ai.baseURL;
+    const targetProtocol = activeProfile?.protocol || settings.ai.protocol;
+    if (!targetModel) throw new Error("请先在“AI 设置”中选择评分模型");
     const resume = await getDefaultResumeForUser(userId);
     if (!resume) throw new Error("请先在个人资料中设置默认简历");
-    const prepared = await preprocessResume(resume);
-    if (!prepared.success) throw new Error(prepared.error.message);
-    const model = await getModel(settings.ai.provider as ProviderType, settings.ai.model, userId, { baseURL: settings.ai.baseURL, protocol: settings.ai.protocol });
+    let prepared = await preprocessResume(resume);
+    if (!prepared.success && resume.File?.filePath) {
+      const fileText = await extractResumeFileText(resume.File.filePath);
+      if (fileText) {
+        prepared = await preprocessText(`# ${resume.title}\n\n${fileText}`);
+      }
+    }
+    if (!prepared.success) {
+      if (prepared.error.code === "TOO_SHORT" || prepared.error.code === "NO_CONTENT") {
+        const chars = (prepared.error.details as any)?.characterCount ?? 0;
+        throw new Error(
+          `当前默认简历“${resume.title}”有效内容过少（有效字数 ${chars}，至少需 200 字）。请先在“个人资料”中添加工作经历或上传完整简历。`
+        );
+      }
+      throw new Error(prepared.error.message);
+    }
+    const model = await getModel(settings.ai.provider as ProviderType, targetModel, userId, { baseURL: targetBaseURL, protocol: targetProtocol });
     const jobs = await prisma.job.findMany({
       where: { userId, id: { in: [...new Set(ids)] } },
       select: { id: true, description: true, salaryRange: true, JobTitle: { select: { label: true } }, Company: { select: { label: true } }, Location: { select: { label: true } } },

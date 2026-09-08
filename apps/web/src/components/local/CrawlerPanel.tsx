@@ -106,7 +106,7 @@ export default function CrawlerPanel() {
         </div>
         <p className="text-xs text-muted-foreground">关键词与城市逐组搜索。智联未配置城市码的城市会全国搜索后按地点筛选；也可输入招聘网站城市码。</p>
         <div className="border-t pt-5"><PreferenceFields value={config} onChange={update} /></div>
-        <p className="text-xs text-muted-foreground">地点、薪资和双休在采集后筛选。日薪、时薪与面议不折算为月薪，无法判断的条件标为未知。</p>
+        <p className="text-xs text-muted-foreground">地点、工作年限、薪资和双休在采集时初筛并后置校验。日薪、时薪与面议不折算为月薪，无法判断的条件标为未知。</p>
         <label className="block max-w-xs text-sm font-medium">每组最多采集条数
           <input className={fieldClass} type="number" min="1" max="50" value={config.limit} onChange={(e) => update({ limit: Number(e.target.value) })} />
         </label>
