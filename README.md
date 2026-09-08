@@ -149,7 +149,7 @@ job-in-cn/
 │   ├── crawler/               # 多平台调度计划、轮转策略与风控暂停
 │   └── scoring/               # LLM 岗位打分管道
 ├── tests/                     # 完整的自动化单元测试与回归测试套件
-├── docs/                      # 详细的技术设计规范 (design.md, PRD.md, ADR 决策记录)
+├── docs/                      # 静态资源与界面预览 (images/)
 └── profile/                   # 候选人偏好配置模板 (candidate.example.yaml)
 ```
 

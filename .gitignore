@@ -29,3 +29,8 @@ apps/web/.env*
 Thumbs.db
 .vscode/
 .idea/
+
+# local ai / notes
+.claude/
+CLAUDE.md
+CONTEXT.md
