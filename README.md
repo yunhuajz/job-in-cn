@@ -1,7 +1,11 @@
-﻿# job-in-cn (JBCN) 🇨🇳
+# job-in-cn (JBCN) 🇨🇳
 
 > **专为国内求职者打造的个人 AI 智能求职工作台。**  
 > 一站式打通 **Boss直聘、前程无忧 (51job)、智联招聘** 三大主流平台：安全采集、集中去重、大模型深度匹配评分、本地看板追踪。
+
+<p align="center">
+  <img src="./docs/images/dashboard.png" alt="JBCN 岗位管理看板预览" width="100%" />
+</p>
 
 ---
 
