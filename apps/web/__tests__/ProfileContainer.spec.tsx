@@ -47,23 +47,23 @@ describe("ProfileContainer Component", () => {
     vi.clearAllMocks();
   });
   it("should render the profile container component", () => {
-    expect(screen.getByText(/profile/i)).toBeInTheDocument();
+    expect(screen.getByText("个人资料")).toBeInTheDocument();
   });
 
   it("should open the create resume dialog upon clicking create resume button", async () => {
     const user = userEvent.setup();
 
     const newButton = screen.getByRole("button", {
-      name: /new/i,
+      name: "新建",
     });
     await user.click(newButton);
 
-    const addResumeItem = await screen.findByText(/add new resume/i);
+    const addResumeItem = await screen.findByText("新建简历");
     await user.click(addResumeItem);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 2, name: /create resume/i }),
+      screen.getByRole("heading", { level: 2, name: "新建简历" }),
     ).toBeInTheDocument();
   });
 });

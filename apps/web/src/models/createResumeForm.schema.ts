@@ -6,7 +6,7 @@ export const CreateResumeFormSchema = z.object({
   createdBy: z.string().optional(),
   title: z
     .string()
-    .min(1, "Resume title is required.")
+    .min(1, "请填写简历标题。")
     .max(100, "Title must be less than 100 characters"),
   profileId: z.string().optional(),
   file: z

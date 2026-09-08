@@ -3,11 +3,16 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadProfile } from '../lib/profile.js';
 import { bossWhoami } from './bridge.js';
+import {
+  hasRiskSignal,
+  REST_BETWEEN_CYCLES_MS,
+  RISK_COOLDOWN_MS,
+} from './patrol-config.js';
 
 // 巡逻模式:在指定时长内循环「采集 → 评分 → 休息」。
 // 双采集源按轮交替:Boss(已验证时) ↔ 51job(无需登录);
-// Boss 未通过验证/风控冷却期间,每轮都走 51job,采集不中断。
-// 风控处理:熔断 → 冷却 45 分钟 → 轻量探针 → 恢复全量。
+// 任一来源触发风控后单独冷却,其余未冷却来源继续低频轮换。
+// 风控处理:熔断 → 冷却 60 分钟 → 轻量探针 → 恢复全量。
 // 用法:npm run boss:patrol [-- --hours 4]
 
 const LOG_FILE = resolve('data/patrol.log');
@@ -15,11 +20,8 @@ const BOSS_HARVEST_TIMEOUT_MS = 45 * 60_000;
 const JOB51_HARVEST_TIMEOUT_MS = 75 * 60_000;
 const ZHAOPIN_HARVEST_TIMEOUT_MS = 60 * 60_000;
 const PROBE_TIMEOUT_MS = 10 * 60_000;
-const REST_BETWEEN_CYCLES_MS = 15 * 60_000;
-const RISK_COOLDOWN_MS = 45 * 60_000;
-// 风控/验证信号:code=36 异常行为、AUTH_REQUIRED 验证页重定向、智联连续空结果熔断
-const RISK_PATTERN = /异常行为|风控|AUTH_REQUIRED/;
-
+const SCORE_TIMEOUT_MS = 15 * 60_000;
+const MAX_SCORE_ROUNDS_PER_CYCLE = 5;
 function log(message: string): void {
   const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
@@ -78,9 +80,16 @@ function runScript(
 }
 
 async function scoreUntilClear(): Promise<void> {
-  // DeepSeek 评分已停用(2026-07-30):改由 Codex 会话内模型直接打分,
-  // 流程:npm run score:dump → 会话产出 data/scores.json → npm run score:apply
-  log('评分:DeepSeek 已停用,新职位留待会话内模型打分(score:dump/score:apply)');
+  // DeepSeek 无人值守评分(2026-08-31 恢复):未评分职位 → LLM 五维评分 → 写回
+  // 密钥在根目录 .env 的 SCORING_API_KEY;循环直至没有未评分职位
+  for (let round = 0; round < MAX_SCORE_ROUNDS_PER_CYCLE; round += 1) {
+    const { output } = await runScript(
+      'src/scoring/run.ts',
+      [],
+      SCORE_TIMEOUT_MS,
+    );
+    if (output.includes('没有未评分')) return;
+  }
 }
 
 async function bossVerified(): Promise<boolean> {
@@ -90,6 +99,14 @@ async function bossVerified(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+type PatrolSource = 'boss' | 'job51' | 'zhaopin';
+
+function alternateSource(source: PatrolSource): PatrolSource {
+  if (source === 'job51') return 'zhaopin';
+  if (source === 'zhaopin') return 'job51';
+  return 'job51';
 }
 
 async function main(): Promise<void> {
@@ -107,6 +124,11 @@ async function main(): Promise<void> {
   let cycle = 0;
   let bossProbeOnly = false;
   let bossCooldownUntil = 0;
+  const sourceCooldownUntil: Record<PatrolSource, number> = {
+    boss: 0,
+    job51: 0,
+    zhaopin: 0,
+  };
   while (Date.now() < deadline) {
     cycle += 1;
     const bossOk = await bossVerified();
@@ -114,7 +136,19 @@ async function main(): Promise<void> {
     // 三源轮换:Boss 可用时每 3 轮采一次 Boss,其余轮 51job/智联交替;
     // Boss 不可用/冷却中:51job 与智联按奇偶轮交替,采集不中断
     const useBoss = bossOk && !bossCooling && cycle % 3 === 1;
-    const source = useBoss ? 'boss' : cycle % 2 === 0 ? 'job51' : 'zhaopin';
+    const preferredSource: PatrolSource = useBoss ? 'boss' : cycle % 2 === 0 ? 'job51' : 'zhaopin';
+    const preferredCoolingUntil =
+      preferredSource === 'boss' ? bossCooldownUntil : sourceCooldownUntil[preferredSource];
+    const fallbackSource = alternateSource(preferredSource);
+    const fallbackCoolingUntil =
+      fallbackSource === 'boss' ? bossCooldownUntil : sourceCooldownUntil[fallbackSource];
+    const source: PatrolSource =
+      preferredCoolingUntil > Date.now() && fallbackCoolingUntil <= Date.now()
+        ? fallbackSource
+        : preferredSource;
+    if (source !== preferredSource) {
+      log(`${preferredSource} 仍在冷却,本轮改采 ${source}`);
+    }
     log(
       `--- 第 ${cycle} 轮开始:` +
       (source === 'boss'
@@ -124,7 +158,10 @@ async function main(): Promise<void> {
       ' ---',
     );
 
-    if (source === 'boss') {
+    const sourceCoolingUntil = source === 'boss' ? bossCooldownUntil : sourceCooldownUntil[source];
+    if (sourceCoolingUntil > Date.now()) {
+      log(`${source} 风控冷却中,本轮跳过采集(剩余 ${Math.ceil((sourceCoolingUntil - Date.now()) / 60_000)} 分钟)`);
+    } else if (source === 'boss') {
       const harvest = await runScript(
         'src/boss/harvest.ts',
         bossProbeOnly ? probeArgs : [],
@@ -133,7 +170,7 @@ async function main(): Promise<void> {
       if (harvest.timedOut) {
         log('Boss 采集子进程超时已终止,本轮直接进入评分');
       }
-      if (RISK_PATTERN.test(harvest.output)) {
+      if (harvest.timedOut || hasRiskSignal(harvest.output)) {
         bossCooldownUntil = Date.now() + RISK_COOLDOWN_MS;
         bossProbeOnly = true;
         log(
@@ -149,10 +186,18 @@ async function main(): Promise<void> {
       if (harvest.timedOut) {
         log('51job 采集子进程超时已终止,本轮直接进入评分');
       }
+      if (harvest.timedOut || hasRiskSignal(harvest.output)) {
+        sourceCooldownUntil[source] = Date.now() + RISK_COOLDOWN_MS;
+        log(`51job 风控熔断:冷却至 ${new Date(sourceCooldownUntil[source]).toLocaleString('zh-CN')}`);
+      }
     } else {
       const harvest = await runScript('src/zhaopin/harvest.ts', [], ZHAOPIN_HARVEST_TIMEOUT_MS);
       if (harvest.timedOut) {
         log('智联采集子进程超时已终止,本轮直接进入评分');
+      }
+      if (harvest.timedOut || hasRiskSignal(harvest.output)) {
+        sourceCooldownUntil[source] = Date.now() + RISK_COOLDOWN_MS;
+        log(`智联风控熔断:冷却至 ${new Date(sourceCooldownUntil[source]).toLocaleString('zh-CN')}`);
       }
     }
 

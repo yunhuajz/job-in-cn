@@ -7,8 +7,8 @@ import { get51JobDescription, search51Jobs, type Job51Card } from './bridge.js';
 // Boss 风控期间的主力采集源(51job 搜索无需登录,风控压力远小于 Boss)
 // 用法:npm run job51:harvest [-- --limit 10]
 
-const DETAIL_INTERVAL_MS = 8000;
-const COMBO_INTERVAL_MS = 45_000;
+const DETAIL_INTERVAL_MS = 20_000;
+const COMBO_INTERVAL_MS = 3 * 60_000;
 const MAX_TAGS = 5;
 
 interface HarvestTotals {

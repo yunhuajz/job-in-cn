@@ -11,10 +11,10 @@ const SETTINGS_SECTIONS: {
   label: string;
   icon: typeof Bot;
 }[] = [
-  { id: "ai-provider", label: "AI Provider", icon: Bot },
-  { id: "api-keys", label: "API Keys", icon: Key },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "mcp-access", label: "MCP Access", icon: Plug },
+  { id: "ai-provider", label: "评分模型", icon: Bot },
+  { id: "api-keys", label: "API Key", icon: Key },
+  { id: "appearance", label: "外观", icon: Palette },
+  { id: "mcp-access", label: "MCP 接入", icon: Plug },
 ];
 
 interface SettingsSidebarProps {

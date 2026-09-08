@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { User } from "./models/user.model";
 import prisma from "./lib/db";
+import { localSession } from "./lib/local/session";
 
 async function getUser(email: string): Promise<User | undefined> {
   try {
@@ -18,7 +19,7 @@ async function getUser(email: string): Promise<User | undefined> {
   }
 }
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
@@ -40,3 +41,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }),
   ],
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+
+export async function auth() {
+  return process.env.JBCN_LOCAL === "1" ? localSession() : nextAuth.auth();
+}

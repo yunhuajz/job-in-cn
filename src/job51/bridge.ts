@@ -1,5 +1,7 @@
 import { runOpencli } from '../boss/opencli.js';
 
+type OpencliRunner = (args: string[]) => Promise<unknown>;
+
 // opencli 51job(前程无忧)站点适配器封装 — Boss 风控期间的备用采集源
 // 与 boss/bridge.ts 同一模式:复用日常 Chrome,后台窗口执行
 
@@ -35,8 +37,10 @@ export async function search51Jobs(
   query: string,
   area: string,
   limit: number,
+  page = 1,
+  run: OpencliRunner = runOpencli,
 ): Promise<Job51Card[]> {
-  const result = await runOpencli([
+  const result = await run([
     '51job',
     'search',
     query,
@@ -44,6 +48,8 @@ export async function search51Jobs(
     area,
     '--limit',
     String(limit),
+    '--page',
+    String(page),
     ...SESSION_ARGS,
   ]);
   return Array.isArray(result) ? (result as Job51Card[]) : [];

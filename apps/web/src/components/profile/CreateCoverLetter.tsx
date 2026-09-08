@@ -46,8 +46,8 @@ function CreateCoverLetter({
   const [isPending, startTransition] = useTransition();
 
   const pageTitle = coverLetterToEdit
-    ? "Edit Cover Letter"
-    : "Create Cover Letter";
+    ? "编辑求职信"
+    : "新建求职信";
 
   const form = useForm<z.infer<typeof CoverLetterFormSchema>>({
     resolver: zodResolver(CoverLetterFormSchema),
@@ -118,11 +118,11 @@ function CreateCoverLetter({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cover Letter Title</FormLabel>
+                  <FormLabel>求职信标题</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Ex: Software Engineer - Google"
+                      placeholder="例如：软件工程师申请信"
                     />
                   </FormControl>
                   <FormMessage>
@@ -142,7 +142,7 @@ function CreateCoverLetter({
               key={coverLetterToEdit?.id ?? "new"}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>内容</FormLabel>
                   <FormControl>
                     <Tiptap field={field} />
                   </FormControl>
@@ -166,11 +166,11 @@ function CreateCoverLetter({
                     className="mt-2 md:mt-0 w-full"
                     onClick={closeDialog}
                   >
-                    Cancel
+                    取消
                   </Button>
                 </div>
                 <Button type="submit" disabled={!isValid}>
-                  Save
+                  保存
                   {isPending && (
                     <Loader className="h-4 w-4 shrink-0 spinner" />
                   )}

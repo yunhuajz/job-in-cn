@@ -13,8 +13,8 @@ import {
 // 智联招聘采集管道:画像「关键词 × 城市码」轮询 → 薪资下限过滤 → 详情页取 JD → add_job(URL 服务端去重)
 // 用法:npm run zp:harvest [-- --limit 10] [-- --query X --city 天津]
 
-const DETAIL_INTERVAL_MS = 8000;
-const COMBO_INTERVAL_MS = 45_000;
+const DETAIL_INTERVAL_MS = 20_000;
+const COMBO_INTERVAL_MS = 3 * 60_000;
 const MAX_TAGS = 5;
 
 interface HarvestTotals {
@@ -92,7 +92,10 @@ async function harvestCombo(
       totals.skipped += 1;
       continue;
     }
-    const description = await getZpJobDescription(tabId, card.url);
+    const description =
+      card.description && card.description.length > 30
+        ? card.description
+        : await getZpJobDescription(tabId, card.url);
     await new Promise((r) => setTimeout(r, DETAIL_INTERVAL_MS));
     try {
       const result: AddJobResult = await addJob({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   OpencliError,
   parseOpencliStdout,
+  resolveOpencliMain,
 } from '../../src/boss/opencli.js';
 
 describe('parseOpencliStdout', () => {
@@ -35,5 +36,18 @@ describe('parseOpencliStdout', () => {
     expect(() => parseOpencliStdout('error: something broke')).toThrow(
       /something broke/,
     );
+  });
+});
+
+describe('resolveOpencliMain', () => {
+  it('按当前 Windows 用户的 APPDATA 解析全局 OpenCLI，而非写死用户名', () => {
+    const previous = process.env.APPDATA;
+    const override = process.env.OPENCLI_MAIN_JS;
+    process.env.APPDATA = 'D:/Profiles/Test/AppData/Roaming';
+    delete process.env.OPENCLI_MAIN_JS;
+    expect(resolveOpencliMain()).toMatch(/Profiles[\\/]Test[\\/]AppData[\\/]Roaming[\\/]npm[\\/]node_modules/);
+    if (previous) process.env.APPDATA = previous;
+    else delete process.env.APPDATA;
+    if (override) process.env.OPENCLI_MAIN_JS = override;
   });
 });

@@ -168,9 +168,9 @@ const ProfileContainer = () => {
     <Card>
       <ResponsiveCardHeader>
         <div className="flex items-baseline gap-2">
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>个人资料</CardTitle>
           {!loading && totalDocuments > 0 && (
-            <RecordsCount count={documents.length} total={totalDocuments} label="documents" />
+            <RecordsCount count={documents.length} total={totalDocuments} label="份文档" />
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
@@ -179,7 +179,7 @@ const ProfileContainer = () => {
               <Button size="sm" variant="outline" className="h-8 gap-1">
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  New
+                  新建
                 </span>
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
@@ -189,13 +189,13 @@ const ProfileContainer = () => {
                 className="cursor-pointer"
                 onClick={createResume}
               >
-                Add New Resume
+                新建简历
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={createCoverLetter}
               >
-                Add New Cover Letter
+                新建求职信
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -236,7 +236,7 @@ const ProfileContainer = () => {
               disabled={loading}
               className="btn btn-primary"
             >
-              {loading ? "Loading..." : "Load More"}
+              {loading ? "正在加载…" : "加载更多"}
             </Button>
           </div>
         )}

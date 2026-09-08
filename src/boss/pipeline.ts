@@ -41,8 +41,8 @@ const defaultDeps: HarvestDeps = {
 };
 
 // 读侧也保持克制节奏,详情请求之间留间隔
-// 2026-07-29 实测:1.5s 间隔连续 ~100 次详情触发 code=36 账户异常,放宽到 5s
-const DETAIL_INTERVAL_MS = 8000;
+// 2026-07-29 实测:1.5s 间隔连续 ~100 次详情触发 code=36 账户异常,进一步放慢读侧节奏
+const DETAIL_INTERVAL_MS = 15_000;
 
 export async function harvestJobs(
   options: BossSearchOptions,

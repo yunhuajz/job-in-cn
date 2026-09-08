@@ -3,12 +3,14 @@ import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { ActivityProvider } from "@/context/ActivityContext";
 import { GlobalActivityBanner } from "@/components/activities/GlobalActivityBanner";
+import LocalNav from "@/components/local/LocalNav";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (process.env.JBCN_LOCAL === "1") return <div className="min-h-screen bg-muted/30 [--primary:166_65%_28%] [--primary-foreground:0_0%_100%]"><LocalNav /><main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main><Toaster /></div>;
   return (
     <ActivityProvider>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">

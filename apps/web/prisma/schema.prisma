@@ -312,6 +312,7 @@ model Job {
   coverLetterId String?
   Notes         Note[]
   tags        Tag[]
+  collections JobCollection[]
 
   // Automation discovery fields
   automationId    String?
@@ -336,6 +337,16 @@ model Job {
   // Also has a hand-written partial unique index (not expressible here):
   // UNIQUE(userId, jobUrl) WHERE automationId IS NOT NULL
   // See migrations/20260710000002_job_automation_url_unique
+}
+
+model JobCollection {
+  id          String   @id @default(uuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  collectedAt DateTime @default(now())
+
+  @@index([jobId, collectedAt])
+  @@index([collectedAt])
 }
 
 model ActivityType {

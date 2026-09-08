@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { join } from 'node:path';
 
 // opencli 输出解析与命令执行的最小封装(plan.md 1.3)
 // 通道:opencli boss 站点适配器(经 Browser Bridge 扩展走日常 Chrome 登录态)
@@ -58,9 +59,14 @@ function extractJsonValue(text: string, start: number): string {
 // 直接调 opencli 的 node 入口(npm 全局安装),不经 cmd.exe:
 // cmd 会把参数里的 & 当命令分隔符(实测智联搜索 URL 含 & 时导航停在 about:blank),
 // Node 直调由 libuv 负责 argv 转义,彻底避开 shell 元字符问题。
-const OPENCLI_MAIN_JS =
-  process.env.OPENCLI_MAIN_JS ??
-  'C:/Users/24841/AppData/Roaming/npm/node_modules/@jackwener/opencli/dist/src/main.js';
+export function resolveOpencliMain(): string {
+  if (process.env.OPENCLI_MAIN_JS) return process.env.OPENCLI_MAIN_JS;
+  const appData = process.env.APPDATA;
+  if (!appData) {
+    throw new OpencliError('未找到 APPDATA，请设置 OPENCLI_MAIN_JS 指向 OpenCLI 的 main.js。');
+  }
+  return join(appData, 'npm', 'node_modules', '@jackwener', 'opencli', 'dist', 'src', 'main.js');
+}
 
 // 单次 opencli 调用的硬上限:适配器遇到风控页/死页面可能无限等待,
 // 超时让错误浮出水面而不是挂住整个管道(实测 chatlist 正常约 30s)
@@ -71,7 +77,7 @@ export function runOpencli(args: string[]): Promise<unknown> {
   return new Promise((resolvePromise, rejectPromise) => {
     execFile(
       process.execPath,
-      [OPENCLI_MAIN_JS, ...args],
+      [resolveOpencliMain(), ...args],
       { maxBuffer: 16 * 1024 * 1024, timeout: OPENCLI_TIMEOUT_MS },
       (error, stdout, stderr) => {
         if (error && !stdout.trim()) {

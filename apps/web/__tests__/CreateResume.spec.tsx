@@ -35,7 +35,7 @@ describe("CreateResume Component", () => {
   it("should render the dialog when resumeDialogOpen is true", () => {
     renderComponent();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(/create resume/i)).toBeInTheDocument();
+    expect(screen.getByText("新建简历")).toBeInTheDocument();
   });
 
   it("should display the correct title when editing a resume", () => {
@@ -47,7 +47,7 @@ describe("CreateResume Component", () => {
 
     renderComponent(mockResumeToEdit);
 
-    expect(screen.getByText(/edit resume title/i)).toBeInTheDocument();
+    expect(screen.getByText("修改简历标题")).toBeInTheDocument();
 
     const titleInput = screen.getByTestId("resume-title-input");
     expect(titleInput).toHaveValue("Test Resume");
@@ -56,7 +56,7 @@ describe("CreateResume Component", () => {
   it("should display the correct title when creating a new resume", () => {
     renderComponent();
 
-    expect(screen.getByText(/create resume/i)).toBeInTheDocument();
+    expect(screen.getByText("新建简历")).toBeInTheDocument();
 
     const titleInput = screen.getByTestId("resume-title-input");
     expect(titleInput).toHaveValue("");
@@ -65,7 +65,7 @@ describe("CreateResume Component", () => {
   it("should call setResumeDialogOpen with false when cancel button is clicked", () => {
     renderComponent();
 
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = screen.getByRole("button", { name: "取消" });
 
     fireEvent.click(cancelButton);
 
@@ -79,12 +79,12 @@ describe("CreateResume Component", () => {
     fireEvent.change(titleInput, { target: { value: "Temporary Title" } });
     fireEvent.change(titleInput, { target: { value: "" } });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     expect(saveButton).toBeDisabled();
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/resume title is required/i)).toBeInTheDocument();
+      expect(screen.getByText("请填写简历标题。")).toBeInTheDocument();
     });
   });
 });

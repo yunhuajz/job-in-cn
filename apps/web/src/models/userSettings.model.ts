@@ -3,6 +3,8 @@ import { AiProvider } from "./ai.model";
 export interface AiSettings {
   provider: AiProvider;
   model: string | undefined;
+  protocol?: "responses" | "chat" | "anthropic";
+  baseURL?: string;
 }
 
 export interface DisplaySettings {

@@ -14,8 +14,8 @@ const inter = localFont({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | JobSync",
-    default: "JobSync",
+    template: process.env.JBCN_LOCAL === "1" ? "%s | JBCN" : "%s | JobSync",
+    default: process.env.JBCN_LOCAL === "1" ? "JBCN" : "JobSync",
   },
   description: "Job Application Tracking System",
 };
@@ -26,7 +26,7 @@ interface Props {
 
 export default function RootLayout({ children }: Readonly<Props>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={process.env.JBCN_LOCAL === "1" ? "zh-CN" : "en"} suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

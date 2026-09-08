@@ -6,12 +6,14 @@ import { getAllCompanies } from "@/actions/company.actions";
 import { getAllJobTitles } from "@/actions/jobtitle.actions";
 import { getAllJobLocations } from "@/actions/jobLocation.actions";
 import { getAllTags } from "@/actions/tag.actions";
+import LocalJobs from "@/components/local/LocalJobs";
 
 export const metadata: Metadata = {
-  title: "My Jobs | JobSync",
+  title: process.env.JBCN_LOCAL === "1" ? "岗位" : "My Jobs",
 };
 
 async function MyJobs() {
+  if (process.env.JBCN_LOCAL === "1") return <LocalJobs />;
   const [statuses, companies, titles, locations, sources, tags] =
     await Promise.all([
       getStatusList(),

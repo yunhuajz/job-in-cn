@@ -12,7 +12,10 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 async function main() {
-  const jobs = await p.job.findMany({
+  const args = process.argv.slice(2);
+  const flags = args.filter((a) => a.startsWith('--'));
+  const outArg = args.find((a) => !a.startsWith('--'));
+  let jobs = await p.job.findMany({
     select: {
       id: true,
       jobUrl: true,
@@ -27,6 +30,12 @@ async function main() {
     },
   });
   await p.$disconnect();
+  // --today:只保留本地今日新增的岗位(用于每日投递清单)
+  if (flags.includes('--today')) {
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    jobs = jobs.filter((j) => j.createdAt >= midnight);
+  }
   jobs.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
   const rows = jobs.map((j) => {
     let summary = '';
@@ -105,9 +114,11 @@ async function main() {
     '</body>',
     '</html>',
   ].join('\n');
+  const now = new Date();
+  const localDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
   const out =
-    process.argv[2] ??
-    resolve(__dirname, '../../../data/岗位汇总-' + new Date().toISOString().slice(0, 10) + '.html');
+    outArg ??
+    resolve(__dirname, '../../../data/岗位汇总-' + localDate + '.html');
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, html, 'utf8');
   console.log('已导出 ' + rows.length + ' 个岗位到 ' + out);

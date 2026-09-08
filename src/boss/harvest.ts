@@ -97,7 +97,7 @@ async function main(): Promise<void> {
     }
     // 组合之间留间隔,避免连续高频搜索触发风控
     if (i < combos.length - 1) {
-      await new Promise((r) => setTimeout(r, 45_000));
+      await new Promise((r) => setTimeout(r, 3 * 60_000));
     }
   }
   console.log(

@@ -148,14 +148,14 @@ function DocumentTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="hidden md:table-cell">Updated</TableHead>
-            <TableHead>Jobs</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>标题</TableHead>
+            <TableHead>类型</TableHead>
+            <TableHead>创建时间</TableHead>
+            <TableHead className="hidden md:table-cell">最近修改</TableHead>
+            <TableHead>关联岗位</TableHead>
+            <TableHead>操作</TableHead>
             <TableHead>
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">操作</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -176,7 +176,7 @@ function DocumentTable({
                       ) : null}
                       {doc.isDefault ? (
                         <Badge className="ml-2 border-transparent bg-green-600 text-white hover:bg-green-600/90">
-                          Default
+                          默认简历
                         </Badge>
                       ) : null}
                     </Link>
@@ -191,7 +191,7 @@ function DocumentTable({
                 </TableCell>
                 <TableCell>
                   <StatusBadge
-                    label={isResume ? "Resume" : "Cover Letter"}
+                    label={isResume ? "简历" : "求职信"}
                     color={DOCUMENT_TYPE_BADGE_COLORS[doc.type]}
                   />
                 </TableCell>
@@ -212,11 +212,11 @@ function DocumentTable({
                         data-testid="document-actions-menu-btn"
                       >
                         <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                        <span className="sr-only">打开操作菜单</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>操作</DropdownMenuLabel>
                       {isResume ? (
                         <>
                           <DropdownMenuItem
@@ -224,12 +224,12 @@ function DocumentTable({
                             onClick={() => editResume(doc)}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            Edit Resume Title
+                            修改简历标题
                           </DropdownMenuItem>
                           <Link href={`/dashboard/profile/resume/${doc.id}`}>
                             <DropdownMenuItem className="cursor-pointer">
                               <FilePenLine className="mr-2 h-4 w-4" />
-                              View/Edit Resume
+                              查看或编辑简历
                             </DropdownMenuItem>
                           </Link>
                           {!doc.isDefault && (
@@ -238,7 +238,7 @@ function DocumentTable({
                               onClick={() => onSetDefault(doc)}
                             >
                               <Star className="mr-2 h-4 w-4" />
-                              Set as default
+                              设为默认简历
                             </DropdownMenuItem>
                           )}
                         </>
@@ -248,7 +248,7 @@ function DocumentTable({
                           onClick={() => editCoverLetter(doc)}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit Cover Letter
+                          编辑求职信
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem
@@ -256,7 +256,7 @@ function DocumentTable({
                         onClick={() => onDeleteDocument(doc)}
                       >
                         <Trash className="mr-2 h-4 w-4" />
-                        Delete
+                        删除
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -268,29 +268,29 @@ function DocumentTable({
       </Table>
       <DeleteAlertDialog
         pageTitle={
-          documentToDelete?.type === "cover-letter" ? "cover letter" : "resume"
+          documentToDelete?.type === "cover-letter" ? "求职信" : "简历"
         }
         open={alertOpen}
         onOpenChange={setAlertOpen}
         onDelete={() => deleteDocument(documentToDelete!)}
         alertDescription={
           documentToDelete?.isDefault
-            ? "This is your default resume. Deleting it will leave you without a default until you set another. This action cannot be undone."
+            ? "这是默认简历。删除后需要重新设置默认简历，且此操作无法撤销。"
             : undefined
         }
       />
       <DeleteAlertDialog
-        pageTitle="resume"
+        pageTitle="简历"
         open={setDefaultConfirmOpen}
         onOpenChange={setSetDefaultConfirmOpen}
         onDelete={() => performSetDefault(documentToSetDefault!)}
-        alertTitle="Change default resume?"
+        alertTitle="更换默认简历？"
         alertDescription={
           currentDefault
-            ? `This will make "${documentToSetDefault?.title}" your default resume, replacing "${currentDefault.title}".`
-            : `This will make "${documentToSetDefault?.title}" your default resume, replacing your current default.`
+            ? `将“${documentToSetDefault?.title}”设为默认简历，并替换“${currentDefault.title}”。`
+            : `将“${documentToSetDefault?.title}”设为默认简历。`
         }
-        actionLabel="Set as default"
+        actionLabel="设为默认简历"
         actionVariant="default"
       />
     </>
