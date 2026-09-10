@@ -2,6 +2,11 @@ import { expect, it } from 'vitest';
 import { crawlerConfigSchema, crawlerPlanSchema } from '../../src/crawler/config.js';
 import { CrawlPlanRun } from '../../src/crawler/plan-run.js';
 
+it('采集计划支持适合长时间运行的轮次数', () => {
+  expect(crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1000 }).rounds).toBe(1000);
+  expect(() => crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1001 })).toThrow();
+});
+
 it('采集轮次在每个搜索组后轮转平台，并按设置重复', async () => {
   const seen: string[] = [];
   const run = new CrawlPlanRun(async function* (config, group) {

@@ -43,3 +43,25 @@ it("开始采集时提交启用平台和轮次数", async () => {
   fireEvent.click(screen.getByRole('button', { name: '开始采集' }));
   await waitFor(() => expect(calls.at(-1)).toMatchObject({ action: 'start', plan: { platforms: ['boss', 'job51'], rounds: 2 } }));
 });
+
+it("允许先清空轮次再输入适合整夜运行的大轮次", async () => {
+  const config = crawlerConfigSchema.parse({ platform: 'boss', keywords: ['AI'], cities: ['天津'] });
+  const calls: any[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (_url, options) => {
+    const body = options?.body ? JSON.parse(options.body) : null;
+    if (body) calls.push(body);
+    return new Response(JSON.stringify({
+      configs: [config],
+      plan: body?.plan ?? { platforms: ['boss'], rounds: 1 },
+      run: { status: body?.action === 'start' ? 'running' : 'idle', added: 0, duplicates: 0, skipped: 0, visited: 0, errors: 0, logs: [] },
+    }));
+  }));
+
+  render(<CrawlerPanel />);
+  const rounds = await screen.findByLabelText('采集轮次');
+  expect(() => fireEvent.change(rounds, { target: { value: '' } })).not.toThrow();
+  fireEvent.change(rounds, { target: { value: '500' } });
+  fireEvent.click(screen.getByRole('button', { name: '开始采集' }));
+
+  await waitFor(() => expect(calls.at(-1)).toMatchObject({ action: 'start', plan: { platforms: ['boss'], rounds: 500 } }));
+});

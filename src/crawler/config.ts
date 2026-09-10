@@ -41,7 +41,7 @@ export type CrawlerConfig = z.infer<typeof crawlerConfigSchema>;
 
 export const crawlerPlanSchema = z.object({
   platforms: z.array(z.enum(platforms)).min(1).max(platforms.length).refine((items) => new Set(items).size === items.length, { message: '招聘平台不能重复' }),
-  rounds: z.number().int().min(1).max(10).default(1),
+  rounds: z.number().int().min(1).max(1000).default(1),
 });
 export type CrawlerPlan = z.infer<typeof crawlerPlanSchema>;
 

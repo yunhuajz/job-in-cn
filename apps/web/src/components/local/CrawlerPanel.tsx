@@ -12,6 +12,7 @@ export default function CrawlerPanel() {
   const [configs, setConfigs] = useState<CrawlerConfig[]>([]);
   const [platform, setPlatform] = useState<Platform>('boss');
   const [plan, setPlan] = useState<CrawlerPlan>(() => crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1 }));
+  const [roundsInput, setRoundsInput] = useState('1');
   const [run, setRun] = useState<CrawlPlanState | null>(null);
   const [recovery, setRecovery] = useState<CrawlCheckpoint | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,7 +35,7 @@ export default function CrawlerPanel() {
         setRecovery(data.recovery ?? null);
         if (initial) {
           setConfigs(data.configs);
-          if (data.plan) setPlan(data.plan);
+          if (data.plan) { setPlan(data.plan); setRoundsInput(String(data.plan.rounds)); }
           setKeywords(data.configs[0].keywords.join('\n'));
           setCities(data.configs[0].cities.join('\n'));
         }
@@ -68,18 +69,25 @@ export default function CrawlerPanel() {
   async function act(action: 'save' | 'start' | 'continue' | 'stop' | 'pause-1' | 'pause-2' | 'resume') {
     setBusy(true); setError(''); setNotice('');
     try {
+      const rounds = Number(roundsInput);
+      if ((action === 'save' || action === 'start') && (!Number.isInteger(rounds) || rounds < 1 || rounds > 1000)) {
+        throw new Error('采集轮次请输入 1 至 1000 之间的整数');
+      }
+      const nextPlan = action === 'save' || action === 'start'
+        ? crawlerPlanSchema.parse({ ...plan, rounds })
+        : plan;
       const next = action === 'save' || action === 'start' ? crawlerConfigSchema.parse({ ...config, keywords: splitTerms(keywords), cities: splitTerms(cities) }) : undefined;
       const nextConfigs = next ? configs.map((item) => item.platform === platform ? next : item) : undefined;
       const requestAction = action === 'pause-1' || action === 'pause-2' ? 'pause' : action;
       const response = await fetch('/api/local/crawler', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: requestAction, hours: action === 'pause-1' ? 1 : action === 'pause-2' ? 2 : undefined, config: next, configs: nextConfigs, plan }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: requestAction, hours: action === 'pause-1' ? 1 : action === 'pause-2' ? 2 : undefined, config: next, configs: nextConfigs, plan: nextPlan }),
       });
       const data = await readLocalJson<{ configs: CrawlerConfig[]; plan?: CrawlerPlan; recovery?: CrawlCheckpoint; run: CrawlPlanState; error?: string }>(response);
       if (!response.ok) throw new Error(data.error ?? '操作失败');
       setRun(data.run);
       setRecovery(data.recovery ?? null);
       if (next) setConfigs(nextConfigs!);
-      if (data.plan) setPlan(data.plan);
+      if (data.plan) { setPlan(data.plan); setRoundsInput(String(data.plan.rounds)); }
       setNotice(action === 'save' ? '配置已保存' : action === 'start' ? '采集已开始，关闭本页面不会停止采集' : action === 'continue' ? '已从上次中断的搜索组继续采集' : action === 'pause-1' ? '已请求暂停 1 小时' : action === 'pause-2' ? '已请求暂停 2 小时' : action === 'resume' ? '已恢复采集' : '停止请求已发出');
     } catch (error) { setError(error instanceof Error ? error.message : '操作失败'); }
     finally { setBusy(false); }
@@ -93,7 +101,7 @@ export default function CrawlerPanel() {
       <fieldset disabled={busy} className="space-y-5">
         <div className="grid gap-6 rounded-xl border border-primary/15 bg-primary/5 p-5 sm:grid-cols-[1fr_160px]">
           <div><div className="text-sm font-medium">采集平台</div><p className="mt-1 text-xs text-muted-foreground">勾选决定本轮参与采集的平台；点击平台名称编辑它的搜索条件。</p><div className="mt-3 flex flex-wrap gap-2">{platforms.map((item) => <div key={item} className={`flex items-center rounded-lg border bg-background transition-colors ${platform === item ? 'border-primary ring-2 ring-primary/10' : ''}`}><label className="flex items-center px-3"><input type="checkbox" aria-label={`启用${platformNames[item]}`} checked={plan.platforms.includes(item)} disabled={plan.platforms.length === 1 && plan.platforms[0] === item} onChange={(event) => togglePlatform(item, event.target.checked)} /></label><button type="button" aria-label={`编辑${platformNames[item]}配置`} className="py-2.5 pr-3 text-sm font-medium" onClick={() => editPlatform(item)}>{platformNames[item]}</button></div>)}</div></div>
-          <label className="text-sm font-medium">采集轮次<input className={fieldClass} type="number" min="1" max="10" value={plan.rounds} onChange={(event) => { setPlan((previous) => crawlerPlanSchema.parse({ ...previous, rounds: Number(event.target.value) })); setNotice('采集计划已修改，保存或开始采集后生效'); }} /></label>
+          <label className="text-sm font-medium">采集轮次<input aria-label="采集轮次" className={fieldClass} type="number" min="1" max="1000" value={roundsInput} onChange={(event) => { setRoundsInput(event.target.value); setNotice('采集计划已修改，保存或开始采集后生效'); }} /><span className="mt-1 block text-xs font-normal text-muted-foreground">最多 1000 轮；需要整夜运行时可填写 100 至 500 轮，随时可以停止。</span></label>
         </div>
         <div className="flex items-center justify-between border-b pb-3"><div><p className="text-xs text-muted-foreground">正在编辑</p><h3 className="mt-1 font-semibold">{platformNames[platform]} · 搜索条件</h3></div>{!plan.platforms.includes(platform) && <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">本轮未启用</span>}</div>
         <div className="grid gap-4 sm:grid-cols-2">
