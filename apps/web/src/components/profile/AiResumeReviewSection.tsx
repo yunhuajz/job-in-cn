@@ -53,7 +53,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
       setOllamaConnected(true);
     } else {
       setOllamaConnected(false);
-      setConnectionError(result.error || "Ollama is not reachable.");
+      setConnectionError(result.error || "无法连接 Ollama。");
     }
   }, []);
 
@@ -75,7 +75,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
           }
         }
       } catch (error) {
-        console.error("Error fetching AI settings:", error);
+        console.error("获取 AI 设置失败：", error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -115,12 +115,12 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
       saveResumeReviewResult(resume.id!, reviewData).then((res) => {
         if (res?.success) {
           onReviewSaved?.(reviewData);
-          toast({ title: "Review saved" });
+          toast({ title: "简历评价已保存" });
         } else {
           toast({
             variant: "destructive",
-            title: "Error!",
-            description: res?.message || "Failed to save review",
+            title: "错误",
+            description: res?.message || "保存简历评价失败",
           });
         }
       });
@@ -157,9 +157,9 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
       if (controller.signal.aborted) return;
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description:
-          err instanceof Error ? err.message : "Failed to get AI review",
+          err instanceof Error ? err.message : "获取 AI 简历评价失败",
       });
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
@@ -210,7 +210,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Review
+              AI 评价
             </span>
           </Button>
         </SheetTrigger>
@@ -233,7 +233,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
           {/* Terminal-style tab bar — always visible */}
           <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-muted/20 shrink-0">
             <SheetTitle className="text-[11px] font-bold tracking-[0.15em] uppercase text-foreground leading-none shrink-0 m-0">
-              AI REVIEW
+              AI 简历评价
             </SheetTitle>
             <span className="text-muted-foreground/30 text-xs select-none">
               ···
@@ -284,7 +284,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Generate AI Review
+                    生成 AI 评价
                   </span>
                 </Button>
               </div>
@@ -293,7 +293,7 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
             {isLoading && !hasContent ? (
               <div className="flex items-center flex-col mt-4">
                 <Loading />
-                <div className="mt-2">Analyzing resume...</div>
+                <div className="mt-2">正在分析简历…</div>
                 {showSlowWarning && <SlowResponseWarning />}
               </div>
             ) : (

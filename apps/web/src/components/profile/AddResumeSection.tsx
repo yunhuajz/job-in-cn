@@ -143,7 +143,7 @@ const AddResumeSection = forwardRef<AddResumeSectionRef, AddResumeSectionProps>(
             >
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Section
+                添加内容
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -154,39 +154,39 @@ const AddResumeSection = forwardRef<AddResumeSectionRef, AddResumeSectionProps>(
                 onClick={openContactInfoDialog}
                 disabled={!!resume?.ContactInfo}
               >
-                Add Contact Info
+                联系方式
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={openSummaryDialog}
                 disabled={!!summarySection}
               >
-                Add Summary
+                个人简介
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={openSkillsDialog}
                 disabled={!!skillsSection}
               >
-                Add Skills
+                技能
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={openExperienceDialog}
               >
-                Add Experience
+                工作经历
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={openEducationDialog}
               >
-                Add Education
+                教育经历
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={openCertificationDialog}
               >
-                Add Certification / License
+                证书／执照
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

@@ -52,11 +52,11 @@ function CertificationCard({
               <h3>{organization}</h3>
               <CardDescription>
                 {issueDate && (
-                  <>Issued: {format(new Date(issueDate), "MMM yyyy")}</>
+                  <>颁发：{format(new Date(issueDate), "MMM yyyy")}</>
                 )}
                 {issueDate && expirationDate && " · "}
                 {expirationDate ? (
-                  <>Expires: {format(new Date(expirationDate), "MMM yyyy")}</>
+                  <>到期：{format(new Date(expirationDate), "MMM yyyy")}</>
                 ) : (
                   issueDate && " · No Expiration"
                 )}

@@ -43,8 +43,8 @@ function AddContactInfo({
   const [showLink2, setShowLink2] = useState(false);
 
   const pageTitle = contactInfoToEdit
-    ? "Edit Contact Info"
-    : "Add Contact Info";
+    ? "编辑基本信息"
+    : "新增基本信息";
 
   const form = useForm<z.infer<typeof AddContactInfoFormSchema>>({
     resolver: zodResolver(AddContactInfoFormSchema),
@@ -98,7 +98,7 @@ function AddContactInfo({
       if (!res.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: res.message,
         });
       } else {
@@ -106,9 +106,7 @@ function AddContactInfo({
         setDialogOpen(false);
         toast({
           variant: "success",
-          description: `Contact Info has been ${
-            contactInfoToEdit ? "updated" : "created"
-          } successfully`,
+          description: `联系方式已${contactInfoToEdit ? "更新" : "新增"}成功`,
         });
       }
     });
@@ -134,7 +132,7 @@ function AddContactInfo({
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>名</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -151,7 +149,7 @@ function AddContactInfo({
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>姓</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -168,7 +166,7 @@ function AddContactInfo({
                 name="headline"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Headline</FormLabel>
+                    <FormLabel>个人标题</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -185,7 +183,7 @@ function AddContactInfo({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>邮箱</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -202,7 +200,7 @@ function AddContactInfo({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>电话</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -219,7 +217,7 @@ function AddContactInfo({
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>地址</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -232,9 +230,9 @@ function AddContactInfo({
             {/* LINK 1 */}
             <div className="md:col-span-2">
               <p className="text-sm font-medium mb-2">
-                Link 1{" "}
+                链接 1{" "}
                 <span className="text-muted-foreground font-normal">
-                  (optional — portfolio, LinkedIn, GitHub, etc.)
+                  （可选，例如个人主页、LinkedIn、GitHub 等）
                 </span>
               </p>
               <div className="grid grid-cols-3 gap-2">
@@ -243,9 +241,9 @@ function AddContactInfo({
                   name="url1Label"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs text-muted-foreground">Label</FormLabel>
+                      <FormLabel className="text-xs text-muted-foreground">名称</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. LinkedIn" {...field} />
+                        <Input placeholder="例如：LinkedIn" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -256,7 +254,7 @@ function AddContactInfo({
                   name="url1"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
-                      <FormLabel className="text-xs text-muted-foreground">URL</FormLabel>
+                      <FormLabel className="text-xs text-muted-foreground">链接</FormLabel>
                       <FormControl>
                         <Input placeholder="https://" {...field} />
                       </FormControl>
@@ -271,7 +269,7 @@ function AddContactInfo({
             {showLink2 ? (
               <div className="md:col-span-2">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium">Link 2</p>
+                  <p className="text-sm font-medium">链接 2</p>
                   <Button
                     type="button"
                     variant="ghost"
@@ -292,9 +290,9 @@ function AddContactInfo({
                     name="url2Label"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs text-muted-foreground">Label</FormLabel>
+                        <FormLabel className="text-xs text-muted-foreground">名称</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. GitHub" {...field} />
+                        <Input placeholder="例如：GitHub" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -305,7 +303,7 @@ function AddContactInfo({
                     name="url2"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
-                        <FormLabel className="text-xs text-muted-foreground">URL</FormLabel>
+                        <FormLabel className="text-xs text-muted-foreground">链接</FormLabel>
                         <FormControl>
                           <Input placeholder="https://" {...field} />
                         </FormControl>
@@ -324,7 +322,7 @@ function AddContactInfo({
                   className="text-muted-foreground px-0 h-auto"
                   onClick={() => setShowLink2(true)}
                 >
-                  + Add another link
+                  + 添加另一个链接
                 </Button>
               </div>
             )}
@@ -338,11 +336,11 @@ function AddContactInfo({
                     className="mt-2 md:mt-0 w-full"
                     onClick={closeDialog}
                   >
-                    Cancel
+                    取消
                   </Button>
                 </div>
                 <Button type="submit" disabled={!formState.isDirty}>
-                  Save
+                  保存
                   {isPending && <Loader className="h-4 w-4 shrink-0 spinner" />}
                 </Button>
               </DialogFooter>

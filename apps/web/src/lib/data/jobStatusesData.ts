@@ -10,8 +10,13 @@ export const JOB_STATUSES = [
     value: "applied",
   },
   {
+    id: "6f3de4c1-5e3e-4c29-a4c3-cc3c5f8f5e01",
+    label: "沟通中",
+    value: "contacted",
+  },
+  {
     id: "79ad373a-3af2-4d7b-8314-ba64d9fc055d",
-    label: "Interview",
+    label: "面试中",
     value: "interview",
   },
   {

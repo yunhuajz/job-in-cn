@@ -52,7 +52,7 @@ const ProfileContainer = () => {
       } else {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: message,
         });
       }
@@ -71,7 +71,7 @@ const ProfileContainer = () => {
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }

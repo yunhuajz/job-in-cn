@@ -74,7 +74,7 @@ export const AiJobMatchSection = ({
           });
         }
       } catch (error) {
-        console.error("Error fetching AI settings:", error);
+        console.error("获取 AI 设置失败：", error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -89,7 +89,7 @@ export const AiJobMatchSection = ({
 
       const resumeTitle =
         resumesRef.current.find((r) => r.id === resumeId)?.title ??
-        "Unknown Resume";
+        "未命名简历";
       const matchData = JSON.stringify({
         matchScore: scores.matchScore,
         recommendation: scores.recommendation,
@@ -104,12 +104,12 @@ export const AiJobMatchSection = ({
       saveJobMatchResult(jobId, scores.matchScore, matchData).then((res) => {
         if (res?.success) {
           onMatchSaved?.(scores.matchScore, matchData);
-          toast({ title: "Match result saved" });
+          toast({ title: "匹配结果已保存" });
         } else {
           toast({
             variant: "destructive",
-            title: "Error!",
-            description: res?.message || "Failed to save match result",
+            title: "错误",
+            description: res?.message || "保存匹配结果失败",
           });
         }
       });
@@ -132,11 +132,11 @@ export const AiJobMatchSection = ({
         throw new Error(message);
       }
     } catch (error) {
-      const message = "Error fetching resume list";
+      const message = "获取简历列表失败";
       const description = error instanceof Error ? error.message : message;
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description,
       });
     }
@@ -166,9 +166,9 @@ export const AiJobMatchSection = ({
       if (controller.signal.aborted) return;
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description:
-          err instanceof Error ? err.message : "Failed to get job match analysis",
+          err instanceof Error ? err.message : "获取岗位匹配分析失败",
       });
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
@@ -190,7 +190,7 @@ export const AiJobMatchSection = ({
       setOllamaConnected(true);
     } else {
       setOllamaConnected(false);
-      setConnectionError(result.error || "Ollama is not reachable.");
+      setConnectionError(result.error || "无法连接 Ollama。");
     }
   }, [selectedModel.provider]);
 
@@ -265,7 +265,7 @@ export const AiJobMatchSection = ({
           {/* Terminal-style tab bar — always visible */}
           <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-muted/20 shrink-0">
             <SheetTitle className="text-[11px] font-bold tracking-[0.15em] uppercase text-foreground leading-none shrink-0 m-0">
-              AI JOB MATCH
+              AI 岗位匹配
             </SheetTitle>
             <span className="text-muted-foreground/30 text-xs select-none">···</span>
             <div className="flex items-center gap-1.5 min-w-0">
@@ -306,7 +306,7 @@ export const AiJobMatchSection = ({
                   }
                 >
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a resume" />
+                    <SelectValue placeholder="选择简历" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -329,7 +329,7 @@ export const AiJobMatchSection = ({
               {isLoading && !hasContent ? (
                 <div className="flex items-center flex-col mt-4">
                   <Loading />
-                  <div className="mt-2">Analyzing job match...</div>
+                  <div className="mt-2">正在分析岗位匹配度…</div>
                   {showSlowWarning && <SlowResponseWarning />}
                 </div>
               ) : (

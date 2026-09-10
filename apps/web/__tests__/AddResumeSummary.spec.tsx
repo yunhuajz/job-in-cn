@@ -50,7 +50,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    expect(screen.getByText("Add Summary")).toBeInTheDocument();
+    expect(screen.getByText("新增个人简介")).toBeInTheDocument();
   });
 
   it("should render Edit Summary dialog when summaryToEdit is provided", () => {
@@ -73,7 +73,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    expect(screen.getByText("Edit Summary")).toBeInTheDocument();
+    expect(screen.getByText("编辑个人简介")).toBeInTheDocument();
   });
 
   it("should render all form fields correctly", () => {
@@ -88,8 +88,8 @@ describe("AddResumeSummary Component", () => {
     expect(screen.getByLabelText(/section title/i)).toBeInTheDocument();
     expect(screen.getByText(/resume summary/i)).toBeInTheDocument();
     expect(screen.getByTestId("tiptap-editor")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "取消" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
   });
 
   it("should populate form fields when editing a summary", () => {
@@ -121,7 +121,7 @@ describe("AddResumeSummary Component", () => {
     );
   });
 
-  it("should close dialog when Cancel button is clicked", async () => {
+  it("should close dialog when 取消 button is clicked", async () => {
     render(
       <AddResumeSummary
         resumeId={mockResumeId}
@@ -130,7 +130,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = screen.getByRole("button", { name: "取消" });
     await user.click(cancelButton);
 
     expect(mockSetDialogOpen).toHaveBeenCalledWith(false);
@@ -145,7 +145,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
     expect(saveButton).toBeDisabled();
   });
 
@@ -173,7 +173,7 @@ describe("AddResumeSummary Component", () => {
       target: { value: "Experienced professional with strong skills" },
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -216,7 +216,7 @@ describe("AddResumeSummary Component", () => {
     await user.clear(sectionTitleInput);
     await user.type(sectionTitleInput, "Updated Professional Summary");
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -264,7 +264,7 @@ describe("AddResumeSummary Component", () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "success",
-          description: "Summary has been created successfully",
+          description: "个人简介已新增成功",
         })
       );
     });
@@ -303,7 +303,7 @@ describe("AddResumeSummary Component", () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: "Failed to create summary",
         })
       );
@@ -389,7 +389,7 @@ describe("AddResumeSummary Component", () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "success",
-          description: "Summary has been updated successfully",
+          description: "个人简介已更新成功",
         })
       );
     });
@@ -404,7 +404,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    expect(screen.queryByText("Add Summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("新增个人简介")).not.toBeInTheDocument();
   });
 
   it("should handle dialog open state change", async () => {
@@ -416,7 +416,7 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    expect(screen.queryByText("Add Summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("新增个人简介")).not.toBeInTheDocument();
 
     rerender(
       <AddResumeSummary
@@ -426,6 +426,6 @@ describe("AddResumeSummary Component", () => {
       />
     );
 
-    expect(screen.getByText("Add Summary")).toBeInTheDocument();
+    expect(screen.getByText("新增个人简介")).toBeInTheDocument();
   });
 });

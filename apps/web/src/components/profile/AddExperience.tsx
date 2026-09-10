@@ -52,7 +52,7 @@ function AddExperience({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [locations, setLocations] = useState<JobLocation[]>([]);
   const [jobTitles, setJobTitles] = useState<JobTitle[]>([]);
-  const pageTitle = experienceToEdit ? "Edit Experience" : "Add Experience";
+  const pageTitle = experienceToEdit ? "编辑工作经历" : "新增工作经历";
   const [isPending, startTransition] = useTransition();
   const getTitleCompanyAndLocationData = useCallback(async () => {
     const [_companies, _titles, _locations] = await Promise.all([
@@ -121,7 +121,7 @@ function AddExperience({
       if (!res.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: res.message,
         });
       } else {
@@ -129,9 +129,7 @@ function AddExperience({
         setDialogOpen(false);
         toast({
           variant: "success",
-          description: `Experience has been ${
-            experienceToEdit ? "updated" : "added"
-          } successfully`,
+          description: `工作经历已${experienceToEdit ? "更新" : "新增"}成功`,
         });
       }
     });
@@ -165,9 +163,9 @@ function AddExperience({
                     name="sectionTitle"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Section Title</FormLabel>
+                        <FormLabel>分区标题</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Ex: Experience" />
+                          <Input {...field} placeholder="例如：工作经历" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -185,7 +183,7 @@ function AddExperience({
                 name="title"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Job Title</FormLabel>
+                    <FormLabel>职位名称</FormLabel>
                     <FormControl>
                       <Combobox options={jobTitles} field={field} creatable />
                     </FormControl>
@@ -202,7 +200,7 @@ function AddExperience({
                 name="company"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Company</FormLabel>
+                    <FormLabel>公司</FormLabel>
                     <FormControl>
                       <Combobox options={companies} field={field} creatable />
                     </FormControl>
@@ -218,7 +216,7 @@ function AddExperience({
                 name="location"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Job Location</FormLabel>
+                    <FormLabel>工作地点</FormLabel>
                     <FormControl>
                       <Combobox options={locations!} field={field} creatable />
                     </FormControl>
@@ -235,7 +233,7 @@ function AddExperience({
                 name="startDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
+                    <FormLabel>开始日期</FormLabel>
                     <DatePicker
                       field={field}
                       presets={false}
@@ -263,7 +261,7 @@ function AddExperience({
                       }}
                     />
                     <FormLabel className="flex items-center ml-4 mb-2">
-                      {field.value ? "Current Job" : "Job Ended"}
+                      {field.value ? "目前仍在职" : "已离职"}
                     </FormLabel>
 
                     <FormMessage />
@@ -279,7 +277,7 @@ function AddExperience({
                 name="endDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
+                    <FormLabel>结束日期</FormLabel>
                     <DatePicker
                       field={field}
                       presets={false}
@@ -299,7 +297,7 @@ function AddExperience({
                 name="jobDescription"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Job Description</FormLabel>
+                    <FormLabel>工作内容</FormLabel>
                     <FormControl>
                       <TiptapEditor field={field} />
                     </FormControl>
@@ -317,11 +315,11 @@ function AddExperience({
                     className="mt-2 md:mt-0 w-full"
                     onClick={closeDialog}
                   >
-                    Cancel
+                    取消
                   </Button>
                 </div>
                 <Button type="submit" disabled={!formState.isDirty}>
-                  Save
+                  保存
                   {isPending && <Loader className="h-4 w-4 shrink-0 spinner" />}
                 </Button>
               </DialogFooter>

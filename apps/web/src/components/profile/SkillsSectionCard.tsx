@@ -67,25 +67,24 @@ function SkillsSectionCard({
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Delete
+                    删除
                   </span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete skills section?</AlertDialogTitle>
+                  <AlertDialogTitle>删除技能分区？</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove the entire skills section and all skills in
-                    it. The skill tags themselves are not deleted.
+                    这会删除整个技能分区及其中的技能，但不会删除技能标签本身。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={onDelete}
                   >
-                    Delete
+                    删除
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

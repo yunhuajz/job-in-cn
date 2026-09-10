@@ -35,26 +35,26 @@ export function ReviewDetails({ reviewData }: ReviewDetailsProps) {
       <div className="space-y-1">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="text-lg font-semibold">
-            Overall {reviewData.overall}
+            综合评分 {reviewData.overall}
           </span>
           <span className="text-sm text-muted-foreground">
-            Impact {reviewData.impact} · Clarity {reviewData.clarity} · ATS{" "}
+            影响力 {reviewData.impact} · 清晰度 {reviewData.clarity} · ATS{" "}
             {reviewData.atsCompatibility}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
           {reviewData.reviewedAt
-            ? `Reviewed on ${format(new Date(reviewData.reviewedAt), "MMM d, yyyy 'at' h:mm a")}`
+            ? `评价时间：${format(new Date(reviewData.reviewedAt), "yyyy年M月d日 HH:mm")}`
             : null}
           {reviewData.provider
-            ? ` using ${reviewData.provider}${reviewData.model ? ` / ${reviewData.model}` : ""}`
+            ? ` · 使用 ${reviewData.provider}${reviewData.model ? ` / ${reviewData.model}` : ""}`
             : null}
         </p>
       </div>
 
       <CollapsibleTrigger asChild>
         <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs">
-          {expanded ? "Hide full review" : "Show full review"}
+          {expanded ? "收起完整评价" : "查看完整评价"}
           <ChevronDown
             className={`ml-1 h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
           />

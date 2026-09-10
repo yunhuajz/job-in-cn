@@ -7,11 +7,11 @@ import { crawlerConfigSchema, experienceNames, type ExperienceOption } from "@/l
 import PreferenceFields, { fieldClass } from "./PreferenceFields";
 import { readLocalJson } from "@/lib/local/response";
 
-type Progress = 'unapplied' | 'applied' | 'progress' | 'offer';
-const progressNames: Record<Progress, string> = { unapplied: '未投递', applied: '投递过', progress: '深度推进中', offer: '收到 offer' };
-interface JobRow { id: string; title: string; company: string; location: string; salary: string; source: string; weekend: 'yes' | 'no' | 'unknown'; score: number | null; url: string | null; progress: Progress; firstCollectedAt: string; collectedAt: string; }
+type Progress = 'draft' | 'applied' | 'contacted' | 'interview' | 'offer' | 'rejected' | 'expired' | 'archived';
+const progressNames: Record<Progress, string> = { draft: '未投递', applied: '已投递', contacted: '沟通中', interview: '面试中', offer: '收到 Offer', rejected: '不合适', expired: '已失效', archived: '已归档' };
+interface JobRow { id: string; title: string; company: string; location: string; salary: string; source: string; weekend: 'yes' | 'no' | 'unknown'; score: number | null; scoreReason: string; evaluationReport: string | null; matchData: string | null; url: string | null; progress: Progress; firstCollectedAt: string; collectedAt: string; }
 export default function LocalJobs() {
-  const [filters, setFilters] = useState(() => ({ ...crawlerConfigSchema.parse({ keywords: ['岗位'], cities: ['全国'] }), q: '', city: '', source: '', progress: '', score: 'all', scoreMin: '', scoreMax: '', from: '', to: '', sort: 'collected_desc' }));
+  const [filters, setFilters] = useState(() => ({ ...crawlerConfigSchema.parse({ keywords: ['岗位'], cities: ['全国'] }), q: '', company: '', city: '', source: '', progress: '', score: 'all', scoreMin: '', scoreMax: '', from: '', to: '', sort: 'collected_desc' }));
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ jobs: JobRow[]; total: number; pages: number; sources: string[] } | null>(null);
@@ -22,6 +22,7 @@ export default function LocalJobs() {
   const [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkProgress, setBulkProgress] = useState<Progress>('applied');
+  const [reportJob, setReportJob] = useState<JobRow | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError('');
@@ -34,16 +35,21 @@ export default function LocalJobs() {
     return () => controller.abort();
   }, [query, page, revision]);
 
-  async function updateProgress() {
-    if (selected.size === 0) return;
+  async function updateProgressFor(ids: string[], progress: Progress, clearSelection = false) {
+    if (ids.length === 0) return;
     setLoading(true); setError(''); setNotice('');
     try {
-      const response = await fetch('/api/local/jobs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [...selected], progress: bulkProgress }) });
+      const response = await fetch('/api/local/jobs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, progress }) });
       const body = await readLocalJson<{ updated?: number; error?: string }>(response);
       if (!response.ok) throw new Error(body.error ?? '更新岗位进度失败');
-      setSelected(new Set()); setNotice(`已更新 ${body.updated ?? 0} 个岗位的进度`); setRevision((value) => value + 1);
+      if (clearSelection) setSelected(new Set());
+      setNotice(`已更新 ${body.updated ?? 0} 个岗位的进度`); setRevision((value) => value + 1);
     } catch (error) { setError(error instanceof Error ? error.message : '更新岗位进度失败'); }
     finally { setLoading(false); }
+  }
+
+  async function updateProgress() {
+    await updateProgressFor([...selected], bulkProgress, true);
   }
 
   async function applySelectedBossJobs() {
@@ -57,6 +63,18 @@ export default function LocalJobs() {
       if (!response.ok) throw new Error(body.error ?? '自动投递失败');
       setSelected(new Set()); setNotice(`本批已明确成功 ${body.sent ?? 0} 个，结束原因：${body.stoppedBy ?? 'completed'}`); setRevision((value) => value + 1);
     } catch (error) { setError(error instanceof Error ? error.message : '自动投递失败'); }
+    finally { setLoading(false); }
+  }
+
+  async function deleteSelectedJobs() {
+    if (selected.size === 0 || !window.confirm(`将这 ${selected.size} 个旧岗位移入回收站吗？之后可以恢复。`)) return;
+    setLoading(true); setError(''); setNotice('');
+    try {
+      const response = await fetch('/api/local/jobs', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [...selected] }) });
+      const body = await readLocalJson<{ deleted?: number; error?: string }>(response);
+      if (!response.ok) throw new Error(body.error ?? '删除岗位失败');
+      setSelected(new Set()); setNotice(`已将 ${body.deleted ?? 0} 个岗位移入回收站`); setRevision((value) => value + 1);
+    } catch (error) { setError(error instanceof Error ? error.message : '删除岗位失败'); }
     finally { setLoading(false); }
   }
 
@@ -102,7 +120,7 @@ export default function LocalJobs() {
       };
       crawlerConfigSchema.parse(sanitized);
       const params = new URLSearchParams();
-      for (const name of ['q', 'city', 'source', 'progress', 'score', 'scoreMin', 'scoreMax', 'from', 'to', 'sort', 'location', 'salaryMin', 'salaryMax', 'salaryMode', 'weekend', 'experience', 'keepUnknown'] as const) params.set(name, String(next[name]));
+      for (const name of ['q', 'company', 'city', 'source', 'progress', 'score', 'scoreMin', 'scoreMax', 'from', 'to', 'sort', 'location', 'salaryMin', 'salaryMax', 'salaryMode', 'weekend', 'experience', 'keepUnknown'] as const) params.set(name, String(next[name]));
       setPage(1); setQuery(params.toString()); setError('');
     } catch { setError('请检查薪资和评分范围，上限不能小于下限'); }
   }
@@ -115,7 +133,7 @@ export default function LocalJobs() {
   function clearAllFilters() {
     const next = {
       ...crawlerConfigSchema.parse({ keywords: ['岗位'], cities: ['全国'] }),
-      q: '', city: '', source: '', progress: '', score: 'all', scoreMin: '', scoreMax: '', from: '', to: '',
+      q: '', company: '', city: '', source: '', progress: '', score: 'all', scoreMin: '', scoreMax: '', from: '', to: '',
       sort: filters.sort, weekend: 'any' as const, experience: 'any' as const, keepUnknown: true,
     };
     setFilters(next); applyFilters(next);
@@ -132,6 +150,9 @@ export default function LocalJobs() {
   const activeChips: { id: string; label: string; onRemove: () => void }[] = [];
   if (filters.q?.trim()) {
     activeChips.push({ id: 'q', label: `搜索: ${filters.q.trim()}`, onRemove: () => setAndApply({ q: '' }) });
+  }
+  if (filters.company?.trim()) {
+    activeChips.push({ id: 'company', label: `公司: ${filters.company.trim()}`, onRemove: () => setAndApply({ company: '' }) });
   }
   if (filters.city?.trim()) {
     activeChips.push({ id: 'city', label: `地点: ${filters.city.trim()}`, onRemove: () => setAndApply({ city: '' }) });
@@ -172,8 +193,9 @@ export default function LocalJobs() {
   return <div className="mx-auto max-w-7xl space-y-6">
     <div className="flex items-center justify-between gap-4 py-3"><div><p className="mb-2 text-xs font-semibold tracking-widest text-primary">我的求职工作台</p><h1 className="text-3xl font-semibold tracking-tight">我的岗位<span className="ml-3 align-middle text-base font-normal text-muted-foreground">{data?.total ?? '—'}</span></h1><p className="mt-2 text-sm text-muted-foreground">从新的机会，到下一份 offer。</p></div><Button variant="outline" disabled={loading} onClick={() => setRevision((r) => r + 1)}>刷新岗位</Button></div>
     <form className="space-y-5 rounded-2xl border bg-card p-5 shadow-sm sm:p-6" onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-sm font-medium">搜索岗位或公司<input className={fieldClass} value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="岗位、公司或描述关键词" /></label>
+        <label className="text-sm font-medium">公司关键词<input className={fieldClass} value={filters.company} onChange={(e) => setFilters({ ...filters, company: e.target.value })} placeholder="如：腾讯 字节" /></label>
         <label className="text-sm font-medium">城市<input className={fieldClass} value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} placeholder="不限 (如: 北京 上海)" /></label>
         <label className="text-sm font-medium">来源<select className={fieldClass} value={filters.source} onChange={(e) => setFilters({ ...filters, source: e.target.value })}><option value="">全部来源</option>{data?.sources.map((source) => <option key={source}>{source}</option>)}</select></label>
       </div>
@@ -231,7 +253,7 @@ export default function LocalJobs() {
         </div>
         <span className="text-muted-foreground">双休信息以岗位描述或已确认结果为准</span>
       </div>
-      <div className="flex flex-wrap items-center gap-3 border-b bg-muted/20 p-4 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label="选择当前页岗位" checked={Boolean(data?.jobs.length) && data!.jobs.every((job) => selected.has(job.id))} onChange={(event) => setSelected(event.target.checked ? new Set(data?.jobs.map((job) => job.id)) : new Set())} />选择当前页</label><span className="mr-auto text-muted-foreground">已选 {selected.size} 个</span><Button variant="outline" disabled={loading || selected.size === 0 || scoringIds.size > 0} onClick={() => void scoreJobs([...selected])}>{scoringIds.size > 0 ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />正在评分 ({scoringIds.size})…</> : '批量 LLM 评分'}</Button><select aria-label="批量设置求职进度" className="h-9 w-36 rounded-lg border bg-background px-3 text-sm" value={bulkProgress} onChange={(event) => setBulkProgress(event.target.value as Progress)}>{Object.entries(progressNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><Button variant="outline" disabled={loading || selected.size === 0} onClick={() => void updateProgress()}>更新进度</Button><Button disabled={loading || selected.size === 0} onClick={() => void applySelectedBossJobs()}>自动投递 Boss</Button></div>
+      <div className="flex flex-wrap items-center gap-3 border-b bg-muted/20 p-4 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label="选择当前页岗位" checked={Boolean(data?.jobs.length) && data!.jobs.every((job) => selected.has(job.id))} onChange={(event) => setSelected(event.target.checked ? new Set(data?.jobs.map((job) => job.id)) : new Set())} />选择当前页</label><span className="mr-auto text-muted-foreground">已选 {selected.size} 个</span><Button variant="outline" disabled={loading || selected.size === 0 || scoringIds.size > 0} onClick={() => void scoreJobs([...selected])}>{scoringIds.size > 0 ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />正在评分 ({scoringIds.size})…</> : '批量 LLM 评分'}</Button><select aria-label="批量设置求职进度" className="h-9 w-36 rounded-lg border bg-background px-3 text-sm" value={bulkProgress} onChange={(event) => setBulkProgress(event.target.value as Progress)}>{Object.entries(progressNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><Button variant="outline" disabled={loading || selected.size === 0} onClick={() => void updateProgress()}>移至此状态</Button><Button variant="outline" disabled={loading || selected.size === 0} onClick={() => void deleteSelectedJobs()}>移入回收站</Button><Button disabled={loading || selected.size === 0} onClick={() => void applySelectedBossJobs()}>自动投递 Boss</Button></div>
       <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/40 text-muted-foreground"><tr><th className="px-4 py-3" aria-label="选择岗位" /><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('title_asc', 'title_desc')}>岗位 / 公司{sortMark('title_asc', 'title_desc')}</button></th><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('location_asc', 'location_desc')}>地点{sortMark('location_asc', 'location_desc')}</button></th><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('salary_asc', 'salary_desc')}>月薪{sortMark('salary_asc', 'salary_desc')}</button></th><th className="whitespace-nowrap px-4 py-3 font-medium">双休</th><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('score_asc', 'score_desc')}>评分{sortMark('score_asc', 'score_desc')}</button></th><th className="whitespace-nowrap px-4 py-3 font-medium">进度</th><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('collected_asc', 'collected_desc')}>最近采集{sortMark('collected_asc', 'collected_desc')}</button></th><th className="whitespace-nowrap px-4 py-3 font-medium"><button type="button" onClick={() => sortBy('source_asc', 'source_desc')}>来源{sortMark('source_asc', 'source_desc')}</button></th></tr>
         <tr className="border-t border-border/60">
           <th />
@@ -244,11 +266,11 @@ export default function LocalJobs() {
           <th className="px-3 pb-3 text-xs">点击排序</th>
           <th className="px-3 pb-3"><select aria-label="按来源筛选" className="h-8 w-28 rounded-md border bg-background px-2 text-xs font-medium" value={filters.source} onChange={(event) => setAndApply({ source: event.target.value })}><option value="">全部来源</option>{data?.sources.map((source) => <option key={source}>{source}</option>)}</select></th>
         </tr></thead>
-        <tbody>{data?.jobs.map((job) => <tr key={job.id} className="border-t hover:bg-muted/25">
-          <td className="px-4 py-4"><input type="checkbox" aria-label={`选择岗位：${job.title}`} checked={selected.has(job.id)} onChange={(event) => setSelected((previous) => { const next = new Set(previous); if (event.target.checked) next.add(job.id); else next.delete(job.id); return next; })} /></td><td className="min-w-56 px-4 py-4"><Link className="font-medium hover:underline" href={`/dashboard/myjobs/${job.id}`}>{job.title}</Link>{job.url && /^https?:\/\//i.test(job.url) && <a className="ml-2 text-xs text-muted-foreground hover:underline" href={job.url} target="_blank" rel="noreferrer" aria-label={`打开原招聘页：${job.title}`}>原网页 ↗</a>}<div className="mt-1 text-xs text-muted-foreground">{job.company}</div></td>
+        <tbody>{data?.jobs.map((job) => <tr key={job.id} onClick={() => setSelected((previous) => { const next = new Set(previous); if (next.has(job.id)) next.delete(job.id); else next.add(job.id); return next; })} className={`cursor-pointer border-t hover:bg-muted/25 ${selected.has(job.id) ? 'bg-primary/5' : ''}`}>
+          <td className="px-4 py-4"><input type="checkbox" aria-label={`选择岗位：${job.title}`} checked={selected.has(job.id)} onClick={(event) => event.stopPropagation()} onChange={(event) => setSelected((previous) => { const next = new Set(previous); if (event.target.checked) next.add(job.id); else next.delete(job.id); return next; })} /></td><td className="min-w-56 px-4 py-4"><Link className="font-medium hover:underline" onClick={(event) => event.stopPropagation()} href={`/dashboard/myjobs/${job.id}`}>{job.title}</Link>{job.url && /^https?:\/\//i.test(job.url) && <a className="ml-2 text-xs text-muted-foreground hover:underline" onClick={(event) => event.stopPropagation()} href={job.url} target="_blank" rel="noreferrer" aria-label={`打开原招聘页：${job.title}`}>原网页 ↗</a>}<div className="mt-1 text-xs text-muted-foreground">{job.company}</div></td>
           <td className="min-w-32 max-w-64 px-4 py-4 text-muted-foreground">{job.location || '未知'}</td><td className="whitespace-nowrap px-4 py-4 font-semibold text-primary">{job.salary || '未知'}</td>
           <td className="whitespace-nowrap px-4 py-4"><span className={`rounded-full px-2 py-1 text-xs ${job.weekend === 'yes' ? 'bg-emerald-50 text-emerald-800' : 'bg-muted text-muted-foreground'}`}>{{ yes: '双休', no: '非双休', unknown: '未知' }[job.weekend]}</span></td>
-          <td className="whitespace-nowrap px-4 py-4 tabular-nums">{scoringIds.has(job.id) ? <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary animate-pulse"><Loader2 className="h-3.5 w-3.5 animate-spin" />评分中…</span> : job.score == null ? <button type="button" className="rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled={loading || scoringIds.size > 0} onClick={() => void scoreJobs([job.id])}>立即评分</button> : <span className="font-semibold">{(job.score / 20).toFixed(1)}/5</span>}</td><td className="whitespace-nowrap px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${{ unapplied: 'bg-muted text-muted-foreground', applied: 'bg-blue-50 text-blue-700', progress: 'bg-amber-50 text-amber-800', offer: 'bg-emerald-50 text-emerald-800' }[job.progress]}`}>{progressNames[job.progress]}</span></td><td className="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground" title={`首次收录：${dateTime(job.firstCollectedAt)}`}>{dateTime(job.collectedAt)}</td><td className="whitespace-nowrap px-4 py-4 text-muted-foreground">{job.source}</td>
+          <td className="max-w-56 px-4 py-4 tabular-nums">{scoringIds.has(job.id) ? <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary animate-pulse"><Loader2 className="h-3.5 w-3.5 animate-spin" />评分中…</span> : job.score == null ? <button type="button" className="rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled={loading || scoringIds.size > 0} onClick={(event) => { event.stopPropagation(); void scoreJobs([job.id]); }}>立即评分</button> : <button type="button" className="text-left" onClick={(event) => { event.stopPropagation(); setReportJob(job); }}><span className="font-semibold">{(job.score / 20).toFixed(1)}/5</span>{job.scoreReason && <span className="mt-1 block max-w-52 truncate text-xs font-normal text-muted-foreground">{job.scoreReason}</span>}</button>}</td><td className="whitespace-nowrap px-4 py-4"><select aria-label={`修改岗位状态：${job.title}`} className="rounded-full border-0 bg-muted px-2.5 py-1 text-xs font-medium outline-none ring-1 ring-inset ring-border/60" value={job.progress} disabled={loading} onClick={(event) => event.stopPropagation()} onChange={(event) => { event.stopPropagation(); void updateProgressFor([job.id], event.target.value as Progress); }}>{Object.entries(progressNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></td><td className="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground" title={`首次收录：${dateTime(job.firstCollectedAt)}`}>{dateTime(job.collectedAt)}</td><td className="whitespace-nowrap px-4 py-4 text-muted-foreground">{job.source}</td>
         </tr>)}</tbody></table></div>
       {!loading && data?.total === 0 && (
         <div className="p-12 text-center text-muted-foreground space-y-3">
@@ -267,5 +289,14 @@ export default function LocalJobs() {
       )}
       <div className="flex items-center justify-end gap-4 border-t p-4 text-sm"><Button variant="outline" disabled={loading || page <= 1} onClick={() => { setSelected(new Set()); setPage((p) => p - 1); }}>上一页</Button><span>{page} / {data?.pages ?? 1}</span><Button variant="outline" disabled={loading || page >= (data?.pages ?? 1)} onClick={() => { setSelected(new Set()); setPage((p) => p + 1); }}>下一页</Button></div>
     </section>
+    {reportJob && (
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/20" role="dialog" aria-modal="true" aria-label={`评分原因：${reportJob.title}`} onClick={() => setReportJob(null)}>
+        <aside className="h-full w-full max-w-xl overflow-y-auto bg-background p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold tracking-widest text-primary">AI 评分详情</p><h2 className="mt-2 text-xl font-semibold">{reportJob.title}</h2><p className="mt-1 text-sm text-muted-foreground">{reportJob.company}</p></div><Button variant="outline" onClick={() => setReportJob(null)}>关闭</Button></div>
+          <div className="mt-6 rounded-xl border bg-muted/20 p-4"><p className="text-3xl font-semibold text-primary">{reportJob.score == null ? '未评分' : `${(reportJob.score / 20).toFixed(1)} / 5`}</p><p className="mt-3 text-sm leading-6">{reportJob.scoreReason || '暂无评分原因，请重新评分。'}</p></div>
+          {reportJob.evaluationReport && <article className="prose prose-sm mt-6 max-w-none whitespace-pre-wrap text-foreground">{reportJob.evaluationReport}</article>}
+        </aside>
+      </div>
+    )}
   </div>;
 }

@@ -44,10 +44,11 @@ it("展示左侧小框列表与当前生效状态看板", async () => {
   render(<LocalAiSettings />);
 
   // 验证顶部生效看板
-  expect(await screen.findByText(/当前生效模型/)).toBeInTheDocument();
+  expect(await screen.findByText(/当前评分模型/)).toBeInTheDocument();
   expect(screen.getAllByText("主力 DeepSeek").length).toBeGreaterThanOrEqual(1);
 
   // 验证左侧配置小框
+  fireEvent.click(screen.getByText(/高级：管理其他连接/));
   expect(screen.getByRole("heading", { level: 3, name: "本地 Ollama" })).toBeInTheDocument();
   expect(screen.getAllByText(/当前生效/).length).toBeGreaterThanOrEqual(1);
 });
@@ -66,6 +67,7 @@ it("点击左侧小框切换查看与编辑不同配置", async () => {
   const nameInput = (await screen.findByLabelText("配置名称")) as HTMLInputElement;
   expect(nameInput.value).toBe("主力 DeepSeek");
 
+  fireEvent.click(screen.getByText(/高级：管理其他连接/));
   // 点击左侧第二个小框 "本地 Ollama"
   fireEvent.click(screen.getByRole("heading", { level: 3, name: "本地 Ollama" }));
 
@@ -109,13 +111,13 @@ it("点击测试连通性按钮显示响应状态与耗时", async () => {
 
   render(<LocalAiSettings />);
 
-  const testBtn = await screen.findByRole("button", { name: "测试连通性" });
+  const testBtn = await screen.findByRole("button", { name: "测试当前连接" });
   fireEvent.click(testBtn);
 
   expect(await screen.findByText(/连接成功.*230ms/)).toBeInTheDocument();
 });
 
-it("可从下拉列表或推荐标签快速选择模型", async () => {
+it("模型名称允许直接手动填写", async () => {
   vi.stubGlobal("fetch", vi.fn(async (url: string) => {
     if (url.includes("/api/local/ai-settings")) {
       return new Response(JSON.stringify(mockInitialData));
@@ -125,10 +127,7 @@ it("可从下拉列表或推荐标签快速选择模型", async () => {
 
   render(<LocalAiSettings />);
 
-  const select = await screen.findByRole("combobox", { name: "下拉选择模型" });
-  expect(select).toBeInTheDocument();
-
-  fireEvent.change(select, { target: { value: "deepseek-reasoner" } });
-  const modelInput = screen.getByRole("combobox", { name: "模型名称" });
+  const modelInput = await screen.findByRole("combobox", { name: "模型名称" });
+  fireEvent.change(modelInput, { target: { value: "deepseek-reasoner" } });
   expect(modelInput).toHaveValue("deepseek-reasoner");
 });

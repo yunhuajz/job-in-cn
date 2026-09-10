@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { format } from "date-fns";
 import { ReviewDetails } from "@/components/profile/ReviewDetails";
 import type { ResumeReviewData } from "@/models/ai.schemas";
 
@@ -29,26 +28,25 @@ describe("ReviewDetails", () => {
 
   it("renders the compact score summary and metadata line", () => {
     render(<ReviewDetails reviewData={reviewData} />);
-    expect(screen.getByText("Overall 85")).toBeInTheDocument();
+    expect(screen.getByText("综合评分 85")).toBeInTheDocument();
     expect(
-      screen.getByText("Impact 80 · Clarity 82 · ATS 78"),
+      screen.getByText("影响力 80 · 清晰度 82 · ATS 78"),
     ).toBeInTheDocument();
-    const expected = `Reviewed on ${format(new Date(reviewData.reviewedAt!), "MMM d, yyyy 'at' h:mm a")} using openai / gpt-4o`;
-    expect(screen.getByText(/Reviewed on/)).toHaveTextContent(expected);
+    expect(screen.getByText(/评价时间：/)).toHaveTextContent("使用 openai / gpt-4o");
   });
 
   it("hides the full markdown body by default", () => {
     render(<ReviewDetails reviewData={reviewData} />);
     expect(screen.queryByTestId("tiptap-content")).not.toBeInTheDocument();
-    expect(screen.getByText("Show full review")).toBeInTheDocument();
+    expect(screen.getByText("查看完整评价")).toBeInTheDocument();
   });
 
   it("expands to reveal the full markdown body when the toggle is clicked", () => {
     render(<ReviewDetails reviewData={reviewData} />);
-    fireEvent.click(screen.getByText("Show full review"));
+    fireEvent.click(screen.getByText("查看完整评价"));
     expect(screen.getByTestId("tiptap-content")).toHaveTextContent(
       "Great resume overall",
     );
-    expect(screen.getByText("Hide full review")).toBeInTheDocument();
+    expect(screen.getByText("收起完整评价")).toBeInTheDocument();
   });
 });

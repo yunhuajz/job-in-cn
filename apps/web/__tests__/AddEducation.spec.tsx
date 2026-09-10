@@ -96,7 +96,7 @@ describe("AddEducation Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Add Education")).toBeInTheDocument();
+    expect(screen.getByText("新增教育经历")).toBeInTheDocument();
     });
   });
 
@@ -132,7 +132,7 @@ describe("AddEducation Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Edit Education")).toBeInTheDocument();
+    expect(screen.getByText("编辑教育经历")).toBeInTheDocument();
     });
   });
 
@@ -162,7 +162,7 @@ describe("AddEducation Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Add Education")).toBeInTheDocument();
+      expect(screen.getByText("新增教育经历")).toBeInTheDocument();
     });
 
     expect(screen.queryByLabelText(/section title/i)).not.toBeInTheDocument();
@@ -250,7 +250,7 @@ describe("AddEducation Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Add Education")).toBeInTheDocument();
+      expect(screen.getByText("新增教育经历")).toBeInTheDocument();
     });
 
     const cancelButton = screen.getByRole("button", { name: /cancel/i });
@@ -549,7 +549,7 @@ describe("AddEducation Component", () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: "Failed to add education",
         })
       );
@@ -637,7 +637,7 @@ describe("AddEducation Component", () => {
       />
     );
 
-    expect(screen.queryByText("Add Education")).not.toBeInTheDocument();
+    expect(screen.queryByText("新增教育经历")).not.toBeInTheDocument();
     expect(container.querySelector("form")).not.toBeInTheDocument();
   });
 
@@ -721,7 +721,7 @@ describe("AddEducation Component", () => {
 
     // Check for loading spinner
     await waitFor(() => {
-      expect(screen.getByText("Save").closest("button")).toContainHTML(
+      expect(screen.getByText("保存").closest("button")).toContainHTML(
         "spinner"
       );
     });

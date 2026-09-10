@@ -58,7 +58,7 @@ export const AiJobMatchResponseContent = ({
       {isStreaming && (
         <div className="flex items-center gap-2 text-muted-foreground text-sm mt-4 animate-pulse">
           <div className="h-2 w-2 bg-primary rounded-full"></div>
-          <span>Analyzing job match...</span>
+          <span>正在分析岗位匹配度…</span>
         </div>
       )}
     </div>

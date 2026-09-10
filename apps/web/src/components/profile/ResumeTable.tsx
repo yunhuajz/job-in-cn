@@ -82,13 +82,13 @@ function DocumentTable({
     if (success) {
       toast({
         variant: "success",
-        description: `"${doc.title}" is now your default resume.`,
+        description: `“${doc.title}”已设为默认简历。`,
       });
       reloadDocuments();
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }
@@ -114,11 +114,11 @@ function DocumentTable({
   const deleteDocument = async (doc: ProfileDocument) => {
     if (!doc.id) return;
     if (doc.jobCount > 0) {
-      const label = doc.type === "resume" ? "resume" : "cover letter";
+      const label = doc.type === "resume" ? "简历" : "求职信";
       return toast({
         variant: "destructive",
-        title: "Error!",
-        description: `Number of jobs using ${label} must be 0!`,
+        title: "错误",
+        description: `使用“${label}”的岗位数量必须为 0 才能删除。`,
       });
     }
 
@@ -128,16 +128,16 @@ function DocumentTable({
         : await deleteCoverLetterById(doc.id);
 
     if (success) {
-      const label = doc.type === "resume" ? "Resume" : "Cover letter";
+      const label = doc.type === "resume" ? "简历" : "求职信";
       toast({
         variant: "success",
-        description: `${label} has been deleted successfully`,
+        description: `${label}已删除`,
       });
       reloadDocuments();
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }

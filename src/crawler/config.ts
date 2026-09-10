@@ -8,7 +8,7 @@ export const platformNames: Record<Platform, string> = {
 
 const terms = z.array(z.string().trim().min(1).max(100)).min(1).max(20);
 
-export const experiences = ['any', 'fresh', '1year', 'fresh_or_1year', '1-3', '3-5', '5-10'] as const;
+export const experiences = ['any', 'fresh', '1year', 'fresh_or_1year', '1-3', '3-5', '5-10', 'max1', 'max3'] as const;
 export type ExperienceOption = (typeof experiences)[number];
 export const experienceNames: Record<ExperienceOption, string> = {
   any: '经验不限',
@@ -18,6 +18,8 @@ export const experienceNames: Record<ExperienceOption, string> = {
   '1-3': '1-3年',
   '3-5': '3-5年',
   '5-10': '5-10年',
+  max1: '不超过1年',
+  max3: '不超过3年',
 };
 
 export const crawlerConfigSchema = z.object({
@@ -116,6 +118,10 @@ export function matchesPreferences(job: {
     if (status === 'unknown') return config.keepUnknown;
     if (config.experience === 'fresh_or_1year') {
       if (status !== 'fresh' && status !== '1year' && status !== 'unlimited') return false;
+    } else if (config.experience === 'max1') {
+      if (status !== 'fresh' && status !== '1year' && status !== 'unlimited') return false;
+    } else if (config.experience === 'max3') {
+      if (status !== 'fresh' && status !== '1year' && status !== '1-3' && status !== 'unlimited') return false;
     } else if (status !== config.experience && status !== 'unlimited') {
       return false;
     }

@@ -125,12 +125,12 @@ function JobDetails({
       setCurrentStatus(status);
       toast({
         variant: "success",
-        description: `Job has been updated successfully`,
+        description: "岗位状态已更新",
       });
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }
@@ -141,13 +141,13 @@ function JobDetails({
     if (success) {
       toast({
         variant: "success",
-        description: `Job has been deleted successfully`,
+        description: "岗位已删除",
       });
       router.push("/dashboard/myjobs");
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }
@@ -156,20 +156,20 @@ function JobDetails({
   const getJobType = (code: string) => {
     switch (code) {
       case "FT":
-        return "Full-time";
+        return "全职";
       case "PT":
-        return "Part-time";
+        return "兼职";
       case "C":
-        return "Contract";
+        return "合同工";
       default:
-        return "Unknown";
+        return "未知";
     }
   };
 
   return (
     <>
       <div className="flex justify-between">
-        <Button title="Go Back" size="sm" variant="outline" onClick={goBack}>
+        <Button title="返回" size="sm" variant="outline" onClick={goBack}>
           <ArrowLeft />
         </Button>
         <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ function JobDetails({
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Match with AI
+              AI 匹配分析
             </span>
           </Button>
           <DropdownMenu>
@@ -194,7 +194,7 @@ function JobDetails({
                 data-testid="job-details-actions-menu-btn"
               >
                 <MoreVertical className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">展开操作菜单</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
@@ -202,17 +202,17 @@ function JobDetails({
               <DropdownMenuGroup>
                 <DropdownMenuItem className="cursor-pointer" onClick={onEditJob}>
                   <Pencil className="mr-2 h-4 w-4" />
-                  Edit Job
+                  编辑岗位
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={onAddNote}>
                   <StickyNote className="mr-2 h-4 w-4" />
-                  Add a Note
+                  添加备注
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Tags className="mr-2 h-4 w-4" />
-                    Change status
+                    修改状态
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent className="p-0">
@@ -235,7 +235,7 @@ function JobDetails({
                   onClick={() => setDeleteAlertOpen(true)}
                 >
                   <Trash className="mr-2 h-4 w-4" />
-                  Delete
+                  删除
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -291,7 +291,7 @@ function JobDetails({
           <h3 className="ml-4 flex flex-wrap items-center gap-2">
             {job.dueDate && new Date() > job.dueDate && currentStatus?.value === "draft" ? (
               <StatusBadge
-                label="Expired"
+                label="已失效"
                 color="amber"
                 className="w-[70px] justify-center"
               />
@@ -328,7 +328,7 @@ function JobDetails({
             <div className="mx-4 mb-4">
               <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                AI Match Analysis
+                AI 匹配分析
               </h4>
               <MatchDetails matchData={parsedMatchData} />
             </div>

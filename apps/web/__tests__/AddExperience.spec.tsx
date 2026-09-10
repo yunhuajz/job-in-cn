@@ -33,7 +33,7 @@ vi.mock("@/components/TiptapEditor", () => ({
         data-testid="tiptap-editor"
         value={field.value || ""}
         onChange={(e) => field.onChange(e.target.value)}
-        placeholder="Enter job description"
+        placeholder="请输入工作内容"
       />
     );
   },
@@ -122,7 +122,7 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Add Experience")).toBeInTheDocument();
+      expect(screen.getByText("新增工作经历")).toBeInTheDocument();
     });
   });
 
@@ -157,7 +157,7 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Edit Experience")).toBeInTheDocument();
+      expect(screen.getByText("编辑工作经历")).toBeInTheDocument();
     });
   });
 
@@ -172,7 +172,7 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/section title/i)).toBeInTheDocument();
+      expect(screen.getByLabelText("分区标题")).toBeInTheDocument();
     });
   });
 
@@ -187,7 +187,7 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByLabelText(/section title/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("分区标题")).not.toBeInTheDocument();
     });
   });
 
@@ -202,22 +202,22 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/job title/i)).toBeInTheDocument();
+      expect(screen.getByText(/职位名称/i)).toBeInTheDocument();
       expect(screen.getByTestId("combobox-title")).toBeInTheDocument();
-      expect(screen.getByText(/company/i)).toBeInTheDocument();
+      expect(screen.getByText(/公司/i)).toBeInTheDocument();
       expect(screen.getByTestId("combobox-company")).toBeInTheDocument();
-      expect(screen.getByText(/job location/i)).toBeInTheDocument();
+      expect(screen.getByText(/工作地点/i)).toBeInTheDocument();
       expect(screen.getByTestId("combobox-location")).toBeInTheDocument();
-      expect(screen.getByText(/start date/i)).toBeInTheDocument();
+      expect(screen.getByText(/开始日期/i)).toBeInTheDocument();
       expect(screen.getByTestId("datepicker-startDate")).toBeInTheDocument();
-      expect(screen.getByText(/end date/i)).toBeInTheDocument();
+      expect(screen.getByText(/结束日期/i)).toBeInTheDocument();
       expect(screen.getByTestId("datepicker-endDate")).toBeInTheDocument();
-      expect(screen.getByText(/job description/i)).toBeInTheDocument();
+      expect(screen.getByText(/工作内容/i)).toBeInTheDocument();
       expect(screen.getByTestId("tiptap-editor")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /cancel/i })
+        screen.getByRole("button", { name: /取消/i })
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /保存/i })).toBeInTheDocument();
     });
   });
 
@@ -268,7 +268,7 @@ describe("AddExperience Component", () => {
     });
   });
 
-  it("should close dialog when Cancel button is clicked", async () => {
+  it("should close dialog when the 取消 button is clicked", async () => {
     render(
       <AddExperience
         resumeId={mockResumeId}
@@ -280,17 +280,17 @@ describe("AddExperience Component", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /cancel/i })
+        screen.getByRole("button", { name: "取消" })
       ).toBeInTheDocument();
     });
 
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = screen.getByRole("button", { name: "取消" });
     await user.click(cancelButton);
 
     expect(mockSetDialogOpen).toHaveBeenCalledWith(false);
   });
 
-  it("should disable Save button when form is not dirty", async () => {
+  it("should disable 保存 button when form is not dirty", async () => {
     render(
       <AddExperience
         resumeId={mockResumeId}
@@ -301,7 +301,7 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).toBeDisabled();
     });
   });
@@ -345,14 +345,14 @@ describe("AddExperience Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/job ended/i)).toBeInTheDocument();
+      expect(screen.getByText(/已离职/i)).toBeInTheDocument();
     });
 
     const currentJobSwitch = screen.getByRole("switch");
     await user.click(currentJobSwitch);
 
     await waitFor(() => {
-      expect(screen.getByText(/current job/i)).toBeInTheDocument();
+      expect(screen.getByText(/目前仍在职/i)).toBeInTheDocument();
     });
   });
 
@@ -403,11 +403,11 @@ describe("AddExperience Component", () => {
 
     // Wait for form to be valid
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).not.toBeDisabled();
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -469,11 +469,11 @@ describe("AddExperience Component", () => {
 
     // Wait for form to be dirty and valid
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).not.toBeDisabled();
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -531,11 +531,11 @@ describe("AddExperience Component", () => {
 
     // Wait for form to be valid
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).not.toBeDisabled();
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -543,7 +543,7 @@ describe("AddExperience Component", () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "success",
-          description: "Experience has been added successfully",
+          description: "工作经历已新增成功",
         })
       );
     });
@@ -594,18 +594,18 @@ describe("AddExperience Component", () => {
 
     // Wait for form to be valid
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).not.toBeDisabled();
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: "Failed to add experience",
         })
       );
@@ -661,18 +661,18 @@ describe("AddExperience Component", () => {
 
     // Wait for form to be dirty and valid
     await waitFor(() => {
-      const saveButton = screen.getByRole("button", { name: /save/i });
+      const saveButton = screen.getByRole("button", { name: "保存" });
       expect(saveButton).not.toBeDisabled();
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: "success",
-          description: "Experience has been updated successfully",
+          description: "工作经历已更新成功",
         })
       );
     });
@@ -688,7 +688,7 @@ describe("AddExperience Component", () => {
       />
     );
 
-    expect(screen.queryByText("Add Experience")).not.toBeInTheDocument();
+    expect(screen.queryByText("新增工作经历")).not.toBeInTheDocument();
   });
 
   it("should load companies, job titles, and locations on mount", async () => {
@@ -743,10 +743,10 @@ describe("AddExperience Component", () => {
       target: { value: "Developed amazing features" },
     });
 
-    const saveButton = screen.getByRole("button", { name: /save/i });
+    const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
-    const saveBtn = screen.getByRole("button", { name: /save/i });
+    const saveBtn = screen.getByRole("button", { name: "保存" });
     const loader = saveBtn.querySelector(".spinner");
     expect(loader).toBeInTheDocument();
 

@@ -82,7 +82,7 @@ function CreateCoverLetter({
       if (!success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: message,
         });
       } else {
@@ -91,9 +91,7 @@ function CreateCoverLetter({
         reloadDocuments();
         toast({
           variant: "success",
-          description: `Cover letter has been ${
-            coverLetterToEdit ? "updated" : "created"
-          } successfully`,
+          description: `求职信已${coverLetterToEdit ? "更新" : "创建"}成功`,
         });
       }
     });

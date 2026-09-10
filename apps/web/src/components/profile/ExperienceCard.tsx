@@ -55,7 +55,7 @@ function ExperienceCard({
               <h3>{Company.label}</h3>
               <CardDescription>
                 {format(startDate, "MMM yyyy")} -{" "}
-                {endDate ? format(endDate, "MMM yyyy") : "Present"}
+                {endDate ? format(endDate, "MMM yyyy") : "至今"}
                 <br />
                 {location.label}
               </CardDescription>

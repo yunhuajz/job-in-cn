@@ -8,7 +8,7 @@ import { readLocalJson } from "@/lib/local/response";
 export interface ProfileItem {
   id: string;
   name: string;
-  protocol: "chat" | "anthropic";
+  protocol: "chat" | "responses" | "anthropic";
   baseURL: string;
   model: string;
   apiKey?: string;
@@ -151,7 +151,7 @@ export default function LocalAiSettings() {
             apiKey: p.apiKey || undefined,
             isActive: p.id === activeId,
           })),
-          activeId,
+          activeId: currentProfile.id,
         }),
       });
       const data = await readLocalJson<{ saved?: boolean; error?: string }>(response);
@@ -168,6 +168,8 @@ export default function LocalAiSettings() {
             : p
         )
       );
+      setActiveId(currentProfile.id);
+      setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === currentProfile.id })));
       setMessage(`配置 [${currentProfile.name}] 已成功保存`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存失败");
@@ -312,7 +314,7 @@ export default function LocalAiSettings() {
         <p className="mb-2 text-xs font-semibold tracking-widest text-primary">LLM 评分与匹配配置</p>
         <h1 className="text-3xl font-semibold tracking-tight">AI 设置</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          支持管理多个大模型配置卡片（Profile），可随时为不同场景切换生效模型。支持 DeepSeek、硅基流动、本地 Ollama 及所有 OpenAI 兼容接口。
+          这里配置岗位评分使用的模型。支持 OpenAI Chat、OpenAI Responses、Anthropic Messages 以及兼容接口。
         </p>
       </div>
 
@@ -322,7 +324,7 @@ export default function LocalAiSettings() {
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">当前生效模型</p>
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground">当前评分模型</p>
               <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600">
                 已就绪 · 全站生效中
               </span>
@@ -353,20 +355,22 @@ export default function LocalAiSettings() {
                   void handleTestConnection();
                 }}
               >
-                {testing && selectedId === activeProfile.id ? "测试中..." : "测试当前连通性"}
+                {testing && selectedId === activeProfile.id ? "测试中…" : "测试当前连接"}
               </Button>
             </div>
           )}
         </div>
       </div>
 
-      {/* 左右分栏：左侧卡片列表 + 右侧详情 */}
+        {/* 左右分栏：左侧卡片列表 + 右侧详情 */}
       <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <details className="order-2 w-full shrink-0 md:order-1 md:w-72">
+          <summary className="cursor-pointer rounded-lg border bg-muted/20 px-3 py-2 text-sm font-medium text-foreground">高级：管理其他连接（{profiles.length}）</summary>
         {/* 左侧：小框卡片列表 */}
-        <aside className="w-full shrink-0 space-y-3 md:w-72">
+        <aside className="mt-3 w-full space-y-3">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-semibold tracking-wider text-muted-foreground">
-              配置列表 ({profiles.length})
+                  <span className="text-xs font-semibold tracking-wider text-muted-foreground">
+              其他连接 ({profiles.length})
             </span>
             <Button
               variant="outline"
@@ -412,7 +416,7 @@ export default function LocalAiSettings() {
                   <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                     <span className="truncate font-mono">{p.model || "未设模型"}</span>
                     <span className="shrink-0">
-                      {p.protocol === "anthropic" ? "Anthropic" : "OpenAI 兼容"}
+                      {p.protocol === "anthropic" ? "Anthropic Messages" : p.protocol === "responses" ? "OpenAI Responses" : "OpenAI Chat"}
                     </span>
                   </div>
 
@@ -452,10 +456,11 @@ export default function LocalAiSettings() {
             })}
           </div>
         </aside>
+        </details>
 
         {/* 右侧：当前选中配置编辑区 */}
         {currentProfile && (
-          <section className="flex-1 space-y-6 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+          <section className="order-1 flex-1 space-y-6 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
               <div>
                 <h2 className="text-xl font-bold tracking-tight">编辑配置 · {currentProfile.name}</h2>
@@ -544,10 +549,11 @@ export default function LocalAiSettings() {
                   className={fieldClass}
                   value={currentProfile.protocol}
                   onChange={(e) =>
-                    updateCurrent({ protocol: e.target.value as "chat" | "anthropic" })
+                    updateCurrent({ protocol: e.target.value as "chat" | "responses" | "anthropic" })
                   }
                 >
-                  <option value="chat">OpenAI 兼容协议 (Chat Completions，支持 99% 的国内外模型)</option>
+                  <option value="chat">OpenAI Chat Completions</option>
+                  <option value="responses">OpenAI Responses</option>
                   <option value="anthropic">Anthropic Messages 协议 (Claude 原生/兼容端点)</option>
                 </select>
               </div>
@@ -605,62 +611,16 @@ export default function LocalAiSettings() {
                       placeholder="例如 deepseek-chat 或 deepseek-reasoner"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      aria-label="下拉选择模型"
-                      className="mt-2 rounded-lg border border-input bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                      value={candidateModels.includes(currentProfile.model) ? currentProfile.model : ""}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          updateCurrent({ model: e.target.value });
-                          setMessage(`已选择模型：${e.target.value}`);
-                        }
-                      }}
-                    >
-                      <option value="" disabled>
-                        ▼ 快捷选择模型
-                      </option>
-                      {candidateModels.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      className="mt-2 shrink-0"
-                      type="button"
-                      variant="outline"
-                      disabled={busy || (!currentProfile.apiKey && !currentProfile.hasKey) || !currentProfile.baseURL}
-                      onClick={() => void handleFetchModels()}
-                    >
-                      获取模型列表
-                    </Button>
-                  </div>
+                  <Button
+                    className="mt-2 shrink-0"
+                    type="button"
+                    variant="outline"
+                    disabled={busy || (!currentProfile.apiKey && !currentProfile.hasKey) || !currentProfile.baseURL}
+                    onClick={() => void handleFetchModels()}
+                  >
+                    获取模型
+                  </Button>
                 </div>
-
-                {/* 推荐快捷标签 */}
-                {candidateModels.length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground/80">快捷点击：</span>
-                    {candidateModels.slice(0, 6).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        className={`rounded-md border px-2 py-0.5 font-mono text-xs transition-all ${
-                          currentProfile.model === m
-                            ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
-                            : "border-border/80 bg-muted/40 hover:border-primary/50 hover:bg-background text-foreground"
-                        }`}
-                        onClick={() => {
-                          updateCurrent({ model: m });
-                          setMessage(`已选择模型：${m}`);
-                        }}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 <datalist id="available-models">
                   {candidateModels.map((m) => (
@@ -668,7 +628,7 @@ export default function LocalAiSettings() {
                   ))}
                 </datalist>
                 <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
-                  支持手动填写任意模型名；也可点击下拉框或快捷标签一键填入，或点击“获取模型列表”远程拉取。
+                  支持手动填写任意模型名；点击“获取模型”可以从服务端拉取列表并作为输入提示。
                 </span>
               </div>
             </div>
@@ -715,7 +675,7 @@ export default function LocalAiSettings() {
                   disabled={busy || !currentProfile.model || (!currentProfile.apiKey && !currentProfile.hasKey && !currentProfile.baseURL.includes("127.0.0.1") && !currentProfile.baseURL.includes("localhost"))}
                   onClick={() => void handleSave()}
                 >
-                  {busy ? "正在保存..." : "保存配置"}
+                {busy ? "正在保存…" : "保存并设为当前"}
                 </Button>
               </div>
             </div>

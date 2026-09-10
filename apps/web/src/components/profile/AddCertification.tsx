@@ -46,9 +46,7 @@ function AddCertification({
   setDialogOpen,
   certificationToEdit,
 }: AddCertificationProps) {
-  const pageTitle = certificationToEdit
-    ? "Edit Certification / License"
-    : "Add Certification / License";
+  const pageTitle = certificationToEdit ? "编辑证书／执照" : "新增证书／执照";
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof AddCertificationFormSchema>>({
@@ -106,7 +104,7 @@ function AddCertification({
       if (!res.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: res.message,
         });
       } else {
@@ -114,9 +112,7 @@ function AddCertification({
         setDialogOpen(false);
         toast({
           variant: "success",
-          description: `Certification has been ${
-            certificationToEdit ? "updated" : "added"
-          } successfully`,
+          description: `证书信息已${certificationToEdit ? "更新" : "新增"}成功`,
         });
       }
     });
@@ -144,12 +140,12 @@ function AddCertification({
                     name="sectionTitle"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Section Title</FormLabel>
+                        <FormLabel>分区标题</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            placeholder="Ex: Certifications"
+                            placeholder="例如：证书与执照"
                           />
                         </FormControl>
                         <FormMessage />
@@ -168,12 +164,12 @@ function AddCertification({
                 name="title"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Certification / License Name</FormLabel>
+                    <FormLabel>证书／执照名称</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value ?? ""}
-                        placeholder="Ex: AWS Certified Solutions Architect"
+                        placeholder="例如：AWS 认证解决方案架构师"
                       />
                     </FormControl>
                     <FormMessage />
@@ -189,12 +185,12 @@ function AddCertification({
                 name="organization"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Issuing Organization</FormLabel>
+                    <FormLabel>颁发机构</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value ?? ""}
-                        placeholder="Ex: Amazon Web Services"
+                        placeholder="例如：亚马逊云科技"
                       />
                     </FormControl>
                     <FormMessage />
@@ -210,7 +206,7 @@ function AddCertification({
                 name="issueDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Issue Date</FormLabel>
+                    <FormLabel>颁发日期</FormLabel>
                     <DatePicker
                       field={field}
                       presets={false}
@@ -230,7 +226,7 @@ function AddCertification({
                 name="expirationDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Expiration Date</FormLabel>
+                    <FormLabel>到期日期</FormLabel>
                     <DatePicker
                       field={field}
                       presets={false}
@@ -258,7 +254,7 @@ function AddCertification({
                       }}
                     />
                     <FormLabel className="flex items-center ml-4 mb-2">
-                      {field.value ? "No Expiration" : "Has Expiration Date"}
+                      {field.value ? "无到期日期" : "有到期日期"}
                     </FormLabel>
                     <FormMessage />
                   </FormItem>
@@ -273,7 +269,7 @@ function AddCertification({
                 name="credentialUrl"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Credential URL (optional)</FormLabel>
+                    <FormLabel>证书链接（可选）</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -296,11 +292,11 @@ function AddCertification({
                     className="mt-2 md:mt-0 w-full"
                     onClick={closeDialog}
                   >
-                    Cancel
+                    取消
                   </Button>
                 </div>
                 <Button type="submit" disabled={!formState.isDirty}>
-                  Save
+                  保存
                   {isPending && <Loader className="h-4 w-4 shrink-0 spinner" />}
                 </Button>
               </DialogFooter>

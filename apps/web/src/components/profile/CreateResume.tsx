@@ -144,7 +144,7 @@ function CreateResume({
       if (!response.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: response?.message,
         });
         return;
@@ -181,7 +181,7 @@ function CreateResume({
       }
       toast({
         variant: "success",
-        description: `Resume title has been ${resumeToEdit ? "updated" : "created"} successfully`,
+        description: `简历标题已${resumeToEdit ? "更新" : "创建"}成功`,
       });
     });
   };

@@ -99,7 +99,7 @@ const makeResume = (sectionCount: number): Resume => ({
 });
 
 const getGenerateButton = () =>
-  screen.queryAllByRole("button", { name: /generate ai review/i })[0];
+  screen.queryAllByRole("button", { name: /生成 AI 评价/i })[0];
 
 // Opens the sheet (via the "Review" trigger) so the aISectionOpen-gated
 // settings fetch runs and selectedModel picks up the mocked AI settings.
@@ -260,7 +260,7 @@ describe("AiResumeReviewSection – auto-save", () => {
     fireEvent.click(getGenerateButton());
 
     await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({ title: "Review saved" });
+      expect(mockToast).toHaveBeenCalledWith({ title: "简历评价已保存" });
     });
   });
 
@@ -339,7 +339,7 @@ describe("AiResumeReviewSection – auto-save", () => {
     await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: "DB error",
       });
     });

@@ -66,3 +66,11 @@ it('无法识别经验的岗位，由 keepUnknown 配置决定保留还是跳过
   expect(matchesPreferences({ experience: '' }, config)).toBe(false);
   expect(matchesPreferences({ experience: '' }, { ...config, keepUnknown: true })).toBe(true);
 });
+
+it('支持按经验要求上限筛选，最多三年会排除三到五年及以上', () => {
+  const config = crawlerConfigSchema.parse({ keywords: ['前端'], cities: ['北京'], experience: 'max3' });
+  expect(matchesPreferences({ experience: '应届生' }, config)).toBe(true);
+  expect(matchesPreferences({ experience: '1-3年' }, config)).toBe(true);
+  expect(matchesPreferences({ experience: '3-5年' }, config)).toBe(false);
+  expect(matchesPreferences({ experience: '5-10年' }, config)).toBe(false);
+});

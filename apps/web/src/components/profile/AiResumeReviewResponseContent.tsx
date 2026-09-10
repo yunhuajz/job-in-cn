@@ -14,9 +14,9 @@ const ScoresSection = ({ scores }: { scores?: ResumeScores }) => {
   if (!scores) return null;
 
   const items = [
-    { label: "Impact", value: scores.impact },
-    { label: "Clarity", value: scores.clarity },
-    { label: "ATS", value: scores.atsCompatibility },
+    { label: "影响力", value: scores.impact },
+    { label: "清晰度", value: scores.clarity },
+    { label: "ATS 兼容性", value: scores.atsCompatibility },
   ];
 
   return (
@@ -64,7 +64,7 @@ export const AiResumeReviewResponseContent = ({
       {isStreaming && (
         <div className="flex items-center gap-2 text-muted-foreground text-sm mt-4 animate-pulse">
           <div className="h-2 w-2 bg-primary rounded-full"></div>
-          <span>Analyzing resume...</span>
+          <span>正在分析简历…</span>
         </div>
       )}
     </div>

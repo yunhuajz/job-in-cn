@@ -54,7 +54,7 @@ function AddSkills({
     resolver: zodResolver(AddSkillsFormSchema),
     defaultValues: {
       resumeId: resumeId ?? "",
-      sectionTitle: "Core Skills",
+      sectionTitle: "核心技能",
       categories: [{ label: "", tagIds: [] }],
     },
   });
@@ -70,7 +70,7 @@ function AddSkills({
       if (Array.isArray(tags)) {
         setAllTags(tags);
       } else {
-        toast({ variant: "destructive", title: "Error", description: "Failed to load skills. Please close and reopen the dialog." });
+        toast({ variant: "destructive", title: "错误", description: "加载技能失败，请关闭后重新打开。" });
       }
     });
 
@@ -99,7 +99,7 @@ function AddSkills({
     } else {
       form.reset({
         resumeId: resumeId ?? "",
-        sectionTitle: "Core Skills",
+        sectionTitle: "核心技能",
         categories: [{ label: "", tagIds: [] }],
       });
     }
@@ -126,7 +126,7 @@ function AddSkills({
       if (!res.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: res.message,
         });
       } else {
@@ -134,7 +134,7 @@ function AddSkills({
         setDialogOpen(false);
         toast({
           variant: "success",
-          description: `Skills section ${isEditing ? "updated" : "added"} successfully`,
+          description: `技能分区已${isEditing ? "更新" : "新增"}`,
         });
       }
     });
@@ -144,10 +144,9 @@ function AddSkills({
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent className="max-h-[85vh] md:max-w-[40rem] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Skills" : "Add Skills"}</DialogTitle>
+          <DialogTitle>{isEditing ? "编辑技能" : "新增技能"}</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Group your skills into categories. Leave a name blank to list skills
-            without a heading.
+            可以将技能分组；分组名称留空即可不显示标题。
           </p>
         </DialogHeader>
         <Form {...form}>
@@ -160,9 +159,9 @@ function AddSkills({
               name="sectionTitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Section heading</FormLabel>
+                  <FormLabel>分区标题</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g. Core Skills" />
+                    <Input {...field} placeholder="例如：核心技能" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -186,7 +185,7 @@ function AddSkills({
                           <FormControl>
                             <Input
                               {...f}
-                              placeholder="Category name (optional, e.g. Languages)"
+                              placeholder="技能分类名称（可选，例如：语言）"
                               className="uppercase text-xs font-medium"
                             />
                           </FormControl>
@@ -217,7 +216,7 @@ function AddSkills({
                             selectedTagIds={f.value}
                             onChange={f.onChange}
                             max={APP_CONSTANTS.MAX_SKILLS_PER_CATEGORY}
-                            placeholder="Search or add a skill…"
+                            placeholder="搜索或添加技能…"
                             onTagCreated={handleTagCreated}
                           />
                         </FormControl>
@@ -238,7 +237,7 @@ function AddSkills({
               onClick={() => append({ label: "", tagIds: [] })}
             >
               <PlusCircle className="h-4 w-4 mr-2" />
-              Add category
+              添加技能分类
             </Button>
 
             <DialogFooter>
@@ -247,10 +246,10 @@ function AddSkills({
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
               >
-                Cancel
+                取消
               </Button>
               <Button type="submit" disabled={isPending}>
-                Save
+                保存
                 {isPending && <Loader className="h-4 w-4 shrink-0 spinner ml-2" />}
               </Button>
             </DialogFooter>

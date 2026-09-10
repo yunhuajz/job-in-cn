@@ -44,7 +44,7 @@ function AddResumeSummary({
 }: AddResumeSummaryProps) {
   const [isPending, startTransition] = useTransition();
 
-  const pageTitle = summaryToEdit ? "Edit Summary" : "Add Summary";
+  const pageTitle = summaryToEdit ? "编辑个人简介" : "新增个人简介";
 
   const form = useForm<z.infer<typeof AddSummarySectionFormSchema>>({
     resolver: zodResolver(AddSummarySectionFormSchema),
@@ -80,7 +80,7 @@ function AddResumeSummary({
       if (!res.success) {
         toast({
           variant: "destructive",
-          title: "Error!",
+          title: "错误",
           description: res.message,
         });
       } else {
@@ -88,9 +88,7 @@ function AddResumeSummary({
         setDialogOpen(false);
         toast({
           variant: "success",
-          description: `Summary has been ${
-            summaryToEdit ? "updated" : "created"
-          } successfully`,
+          description: `个人简介已${summaryToEdit ? "更新" : "新增"}成功`,
         });
       }
     });
@@ -116,9 +114,9 @@ function AddResumeSummary({
                 name="sectionTitle"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Section Title</FormLabel>
+                    <FormLabel>分区标题</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: Summary" />
+                      <Input {...field} placeholder="例如：个人简介" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,7 +130,7 @@ function AddResumeSummary({
                 name="content"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Resume Summary</FormLabel>
+                    <FormLabel>个人简介</FormLabel>
                     <FormControl>
                       <TiptapEditor field={field} />
                     </FormControl>
@@ -152,11 +150,11 @@ function AddResumeSummary({
                     className="mt-2 md:mt-0 w-full"
                     onClick={closeDialog}
                   >
-                    Cancel
+                    取消
                   </Button>
                 </div>
                 <Button type="submit" disabled={!formState.isDirty}>
-                  Save
+                  保存
                   {isPending && <Loader className="h-4 w-4 shrink-0 spinner" />}
                 </Button>
               </DialogFooter>

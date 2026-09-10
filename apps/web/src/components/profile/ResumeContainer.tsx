@@ -166,12 +166,12 @@ function buildPendingCards(data: DeepPartial<ResumeImportData>): PendingCard[] {
 
 function cardSectionLabel(type: ImportCardPayload["type"]): string {
   const map: Record<string, string> = {
-    contactInfo: "Contact Info",
-    summary: "Summary",
-    experience: "Experience",
-    education: "Education",
-    certification: "Certification",
-    skills: "Skills",
+    contactInfo: "基本信息",
+    summary: "个人简介",
+    experience: "工作经历",
+    education: "教育经历",
+    certification: "证书",
+    skills: "技能",
   };
   return map[type] ?? type;
 }
@@ -195,11 +195,11 @@ function PendingCardDetail({ card }: { card: ImportCardPayload }) {
     const name = `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim();
     return (
       <div className="space-y-1 mt-1">
-        {name && <DetailRow label="Name" value={name} />}
-        <DetailRow label="Headline" value={d.headline} />
-        <DetailRow label="Email" value={d.email} />
-        <DetailRow label="Phone" value={d.phone} />
-        <DetailRow label="Address" value={d.address} />
+        {name && <DetailRow label="姓名" value={name} />}
+        <DetailRow label="个人标题" value={d.headline} />
+        <DetailRow label="邮箱" value={d.email} />
+        <DetailRow label="电话" value={d.phone} />
+        <DetailRow label="地址" value={d.address} />
       </div>
     );
   }
@@ -217,10 +217,10 @@ function PendingCardDetail({ card }: { card: ImportCardPayload }) {
     const dates = [d.startDate, d.endDate].filter(Boolean).join(" – ");
     return (
       <div className="space-y-1 mt-1">
-        <DetailRow label="Title" value={d.jobTitle} />
-        <DetailRow label="Company" value={d.company} />
-        <DetailRow label="Location" value={d.location} />
-        {dates && <DetailRow label="Dates" value={dates} />}
+        <DetailRow label="职位" value={d.jobTitle} />
+        <DetailRow label="公司" value={d.company} />
+        <DetailRow label="地点" value={d.location} />
+        {dates && <DetailRow label="时间" value={dates} />}
         {typeof d.description === "string" && d.description && (
           <p className="text-xs text-foreground mt-1 whitespace-pre-wrap pl-[5.5rem]">
             {d.description}
@@ -235,11 +235,11 @@ function PendingCardDetail({ card }: { card: ImportCardPayload }) {
     const dates = [d.startDate, d.endDate].filter(Boolean).join(" – ");
     return (
       <div className="space-y-1 mt-1">
-        <DetailRow label="Institution" value={d.institution} />
-        <DetailRow label="Degree" value={d.degree} />
-        <DetailRow label="Field" value={d.fieldOfStudy} />
-        <DetailRow label="Location" value={d.location} />
-        {dates && <DetailRow label="Dates" value={dates} />}
+        <DetailRow label="学校" value={d.institution} />
+        <DetailRow label="学位" value={d.degree} />
+        <DetailRow label="专业" value={d.fieldOfStudy} />
+        <DetailRow label="地点" value={d.location} />
+        {dates && <DetailRow label="时间" value={dates} />}
         {typeof d.description === "string" && d.description && (
           <p className="text-xs text-foreground mt-1 whitespace-pre-wrap pl-[5.5rem]">
             {d.description}
@@ -253,11 +253,11 @@ function PendingCardDetail({ card }: { card: ImportCardPayload }) {
     const d = card.data;
     return (
       <div className="space-y-1 mt-1">
-        <DetailRow label="Title" value={d.title} />
-        <DetailRow label="Issuer" value={d.organization} />
-        <DetailRow label="Issued" value={d.issueDate} />
-        <DetailRow label="Expires" value={d.expirationDate} />
-        <DetailRow label="URL" value={d.credentialUrl} />
+        <DetailRow label="名称" value={d.title} />
+        <DetailRow label="颁发机构" value={d.organization} />
+        <DetailRow label="颁发日期" value={d.issueDate} />
+        <DetailRow label="到期日期" value={d.expirationDate} />
+        <DetailRow label="链接" value={d.credentialUrl} />
       </div>
     );
   }
@@ -332,7 +332,7 @@ function PendingCardRow({
             ) : (
               <Check className="h-3 w-3" />
             )}
-            <span className="ml-1">Accept</span>
+            <span className="ml-1">确认</span>
           </Button>
           <Button
             size="sm"
@@ -439,9 +439,9 @@ function ResumeContainer({
         if (cards.length === 0) {
           setImportMode(false);
           toast({
-            title: "No sections found",
+            title: "没有找到可用分区",
             description:
-              "No structured data could be extracted from the document.",
+              "无法从文档中提取结构化内容。",
           });
           return;
         }
@@ -456,11 +456,11 @@ function ResumeContainer({
         setImportMode(false);
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "错误",
           description:
             error instanceof Error
               ? error.message
-              : "Failed to contact AI service.",
+              : "联系 AI 服务失败。",
         });
       } finally {
         if (importAbortRef.current === abortController) {
@@ -557,7 +557,7 @@ function ResumeContainer({
       } else {
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "错误",
           description: result.message,
         });
       }
@@ -578,7 +578,7 @@ function ResumeContainer({
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "错误",
         description: result?.message,
       });
     }
@@ -614,7 +614,7 @@ function ResumeContainer({
       method: "POST",
       body: formData,
     });
-    if (!res.ok) throw new Error("Upload failed");
+    if (!res.ok) throw new Error("上传失败");
     router.refresh();
   };
 
@@ -632,9 +632,9 @@ function ResumeContainer({
     );
     if (!hasName && !hasSections) {
       toast({
-        title: "Nothing to export",
+        title: "没有可导出的内容",
         description:
-          "Add your contact info and at least one section (Summary, Experience, or Education) before exporting.",
+          "请先填写基本信息，并至少添加一个分区（个人简介、工作经历或教育经历）。",
         variant: "destructive",
       });
       return;
@@ -649,8 +649,8 @@ function ResumeContainer({
         triggerDownload(blob, filename);
         await uploadPdfAsAttachment(blob, filename, false);
         toast({
-          title: "PDF exported",
-          description: "Saved to Downloads and attached to this resume.",
+          title: "PDF 已导出",
+          description: "文件已保存到下载目录，并附加到这份简历。",
         });
       } else {
         setPendingPdf({ blob, filename });
@@ -658,7 +658,7 @@ function ResumeContainer({
       }
     } catch {
       toast({
-        title: "Failed to generate PDF. Please try again.",
+        title: "生成 PDF 失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -676,18 +676,18 @@ function ResumeContainer({
       if (choice === "replace") {
         await uploadPdfAsAttachment(blob, filename, true);
         toast({
-          title: "PDF exported",
-          description: "Saved to Downloads and attachment replaced.",
+          title: "PDF 已导出",
+          description: "文件已保存到下载目录，并替换了原附件。",
         });
       } else {
         toast({
-          title: "PDF exported",
-          description: "Saved to your Downloads folder.",
+          title: "PDF 已导出",
+          description: "文件已保存到下载目录。",
         });
       }
     } catch {
       toast({
-        title: "Failed to upload PDF. Please try again.",
+        title: "上传 PDF 失败，请重试。",
         variant: "destructive",
       });
     } finally {
@@ -744,7 +744,7 @@ function ResumeContainer({
     if (!result.success) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "错误",
         description: result.message,
       });
     } else {
@@ -780,7 +780,7 @@ function ResumeContainer({
     } else {
       toast({
         variant: "destructive",
-        title: "Error!",
+        title: "错误",
         description: message,
       });
     }
@@ -789,17 +789,17 @@ function ResumeContainer({
   return (
     <>
       <div className="flex justify-between">
-        <Button title="Go Back" size="sm" variant="outline" onClick={goBack}>
+        <Button title="返回" size="sm" variant="outline" onClick={goBack}>
           <ArrowLeft />
         </Button>
       </div>
       <Card>
         <CardHeader className="flex-col gap-2 sm:flex-row sm:justify-between sm:items-center lg:grid lg:grid-cols-3 lg:items-center">
           <div className="flex items-center gap-2">
-            <CardTitle>Resume</CardTitle>
+            <CardTitle>简历</CardTitle>
             {isDefault && (
               <Badge className="border-transparent bg-green-600 text-white hover:bg-green-600/90">
-                Default
+                默认简历
               </Badge>
             )}
           </div>
@@ -831,7 +831,7 @@ function ResumeContainer({
                     disabled={isExporting}
                   >
                     <FileDown className="h-4 w-4 mr-2" />
-                    {isExporting ? "Generating…" : "Export to PDF"}
+                    {isExporting ? "正在生成…" : "导出 PDF"}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     <DropdownMenuItem
@@ -839,14 +839,14 @@ function ResumeContainer({
                       onClick={() => handleExportPdf("simple")}
                       disabled={isExporting}
                     >
-                      Simple
+                      简洁版
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
                       onClick={() => handleExportPdf("professional")}
                       disabled={isExporting}
                     >
-                      Professional
+                      专业版
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -864,7 +864,7 @@ function ResumeContainer({
                     }}
                   >
                     <Star className="h-4 w-4 mr-2" />
-                    Set as default
+                    设为默认简历
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -878,9 +878,9 @@ function ResumeContainer({
         open={setDefaultConfirmOpen}
         onOpenChange={setSetDefaultConfirmOpen}
         onDelete={handleSetDefault}
-        alertTitle="Change default resume?"
-        alertDescription="This will make this resume your default, replacing any current default."
-        actionLabel="Set as default"
+        alertTitle="更换默认简历？"
+        alertDescription="这份简历会成为默认简历，并替换当前的默认简历。"
+        actionLabel="设为默认简历"
         actionVariant="default"
       />
 
@@ -889,7 +889,7 @@ function ResumeContainer({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4" />
-              AI Review
+              AI 简历评价
             </CardTitle>
             <ReviewDetails reviewData={parsedReviewData} />
           </CardHeader>
@@ -906,25 +906,22 @@ function ResumeContainer({
                   {isStructuring ? (
                     <>
                       <Loader className="h-4 w-4 text-blue-500 animate-spin" />
-                      Structuring your document… you can review and accept items
-                      once it finishes.
+                      正在整理文档…完成后你可以逐项检查并确认。
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 text-blue-500" />
-                      We pre-filled this from your document. Review each item
-                      and accept the ones you want.
+                      已根据文档预填内容，请逐项检查并确认需要保留的内容。
                       {importTruncated &&
-                        " Only the first 5 pages were imported."}
+                        " 仅导入了前 5 页。"}
                     </>
                   )}
                 </p>
                 {unrecognizedSections.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
-                    Some sections couldn&apos;t be imported (
-                    {unrecognizedSections.join(", ")}) — the resume model
-                    doesn&apos;t support these yet.
+                    以下部分无法导入（
+                    {unrecognizedSections.join(", ")}）— 当前简历暂不支持这些内容。
                   </p>
                 )}
               </div>
@@ -934,7 +931,7 @@ function ResumeContainer({
                 className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10"
                 onClick={() => setShowDiscardImportConfirm(true)}
               >
-                Discard import
+                放弃导入
               </Button>
             </div>
             <div className="mt-3 space-y-2">
@@ -958,7 +955,7 @@ function ResumeContainer({
           <ResponsiveCardHeader>
             <div>
               <p className="text-sm text-muted-foreground">
-                A file is attached. Structure it into sections using AI.
+                已附加简历文件，可以使用 AI 将其整理成简历内容。
               </p>
               {aiModel.provider === "ollama" &&
                 ollamaConnected === false &&
@@ -982,7 +979,7 @@ function ResumeContainer({
               ) : (
                 <Sparkles className="h-4 w-4 mr-2" />
               )}
-              {isStructuring ? "Structuring…" : "Structure with AI"}
+              {isStructuring ? "正在整理…" : "使用 AI 整理"}
             </Button>
           </ResponsiveCardHeader>
         </Card>
@@ -1031,10 +1028,9 @@ function ResumeContainer({
       <AlertDialog open={showAttachConfirm} onOpenChange={setShowAttachConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Replace existing attachment?</AlertDialogTitle>
+            <AlertDialogTitle>替换现有附件？</AlertDialogTitle>
             <AlertDialogDescription>
-              This resume already has a file attached. Would you like to replace
-              it with the exported PDF?
+              这份简历已有附件。是否用导出的 PDF 替换它？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1044,16 +1040,16 @@ function ResumeContainer({
                 setPendingPdf(null);
               }}
             >
-              Cancel
+              取消
             </AlertDialogCancel>
             <Button
               variant="outline"
               onClick={() => handleAttachChoice("download-only")}
             >
-              Download only
+              仅下载
             </Button>
             <AlertDialogAction onClick={() => handleAttachChoice("replace")}>
-              Replace attachment
+              替换附件
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1066,19 +1062,18 @@ function ResumeContainer({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard import?</AlertDialogTitle>
+            <AlertDialogTitle>放弃导入？</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete this resume and its attached file. Unsaved
-              suggestions will be lost.
+              这会删除这份简历及其附件，尚未保存的建议也会丢失。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDiscardImport}
             >
-              Discard import
+              放弃导入
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
