@@ -60,6 +60,28 @@ it('一个平台遇验证时只暂停该平台，其他平台继续本轮采集'
   expect(run.snapshot()).toMatchObject({ status: 'completed', added: 1, blockedPlatforms: { boss: '请完成滑块验证' } });
 });
 
+it('Boss 英文登录失效错误只暂停 Boss，其他平台继续采集', async () => {
+  const authError = `opencli 执行失败(exit 77):ok: false
+error:
+code: AUTH_REQUIRED
+message: 'Boss path does not look like authenticated geek/recruiter page: /'
+help: Please open Chrome or Chromium and log in to https://zhipin.com
+exitCode: 77`;
+  const visited: string[] = [];
+  const run = new CrawlPlanRun(async function* (config) {
+    visited.push(config.platform);
+    if (config.platform === 'boss') throw new Error(authError);
+    yield { company: '公司', jobTitle: '继续采集', jobDescription: '', location: '济南', source: config.platform, jobUrl: `https://example.test/${config.platform}`, salaryRange: '10-15K', tags: [] };
+  });
+  const configs = ['boss', 'job51', 'zhaopin'].map((platform) => crawlerConfigSchema.parse({ platform, keywords: ['AI'], cities: ['济南'] }));
+
+  run.start(crawlerPlanSchema.parse({ platforms: ['boss', 'job51', 'zhaopin'], rounds: 1 }), configs, async () => ({ created: true }));
+  await run.finished();
+
+  expect(visited).toEqual(['boss', 'job51', 'zhaopin']);
+  expect(run.snapshot()).toMatchObject({ status: 'completed', added: 2, blockedPlatforms: { boss: authError } });
+});
+
 it('采集在下一个搜索组前执行平台间隔', async () => {
   let waits = 0;
   const run = new CrawlPlanRun(async function* (config) {

@@ -188,5 +188,5 @@ export class CrawlPlanRun {
 }
 
 function needsUserCheck(message: string): boolean {
-  return /验证|滑块|slider|验证码|账号异常|存在风险|风险|登录|security/i.test(message);
+  return /验证|滑块|slider|验证码|账号异常|存在风险|风险|登录|security|AUTH_REQUIRED|authentication required|authenticated|log\s*in|sign\s*in/i.test(message);
 }
