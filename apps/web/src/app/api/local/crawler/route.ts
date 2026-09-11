@@ -41,8 +41,11 @@ export async function POST(request: Request) {
         configStore.savePlan(plan);
         crawler.start(plan, configs, (job) => recordCrawledJob({ ...job, createdVia: "jbcn" }, session.user.id));
       } else {
-        configStore.save(config);
+        const configs = Array.isArray(body.configs) ? body.configs.map((item: unknown) => crawlerConfigSchema.parse(item)) : [config];
+        for (const item of configs) configStore.save(item);
         if (body.plan) configStore.savePlan(crawlerPlanSchema.parse(body.plan));
+        // 配置已变化时不能再用包含旧城市/筛选条件的恢复快照。
+        configStore.saveCheckpoint(undefined);
       }
     } else if (body.action === "save-plan") configStore.savePlan(crawlerPlanSchema.parse(body.plan));
     else return Response.json({ error: "未知操作" }, { status: 400 });

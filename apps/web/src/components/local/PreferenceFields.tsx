@@ -38,7 +38,7 @@ export default function PreferenceFields({ value, onChange }: {
     </label>
     <label className="flex items-center gap-2 text-sm sm:pt-6">
       <input type="checkbox" checked={value.keepUnknown} onChange={(e) => set({ keepUnknown: e.target.checked })} />
-      保留条件未知的岗位
+      保留无法判断条件的岗位（可能不符合筛选）
     </label>
   </div>;
 }

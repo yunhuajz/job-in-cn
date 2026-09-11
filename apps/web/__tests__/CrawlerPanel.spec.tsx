@@ -65,3 +65,31 @@ it("允许先清空轮次再输入适合整夜运行的大轮次", async () => {
 
   await waitFor(() => expect(calls.at(-1)).toMatchObject({ action: 'start', plan: { platforms: ['boss'], rounds: 500 } }));
 });
+
+it("开始采集时把当前搜索条件同步到所有已启用平台", async () => {
+  const boss = crawlerConfigSchema.parse({ platform: 'boss', keywords: ['AI'], cities: ['天津'], experience: 'any' });
+  const job51 = crawlerConfigSchema.parse({ platform: 'job51', keywords: ['旧关键词'], cities: ['天津', '苏州'], experience: 'any' });
+  const zhaopin = crawlerConfigSchema.parse({ platform: 'zhaopin', keywords: ['旧关键词'], cities: ['石家庄'], experience: 'any' });
+  const calls: any[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (_url, options) => {
+    const body = options?.body ? JSON.parse(options.body) : null;
+    if (body) calls.push(body);
+    return Response.json({
+      configs: body?.configs ?? [boss, job51, zhaopin],
+      plan: body?.plan ?? { platforms: ['boss', 'job51', 'zhaopin'], rounds: 1 },
+      run: { status: body?.action === 'start' ? 'running' : 'idle', added: 0, duplicates: 0, skipped: 0, visited: 0, errors: 0, logs: [] },
+    });
+  }));
+
+  render(<CrawlerPanel />);
+  fireEvent.change(await screen.findByLabelText('搜索城市'), { target: { value: '济南' } });
+  fireEvent.change(screen.getByLabelText('工作年限'), { target: { value: 'max3' } });
+  fireEvent.click(screen.getByRole('button', { name: '开始采集' }));
+
+  await waitFor(() => expect(calls.at(-1).configs).toHaveLength(3));
+  expect(calls.at(-1).configs.map((config: any) => ({ platform: config.platform, cities: config.cities, experience: config.experience }))).toEqual([
+    { platform: 'boss', cities: ['济南'], experience: 'max3' },
+    { platform: 'job51', cities: ['济南'], experience: 'max3' },
+    { platform: 'zhaopin', cities: ['济南'], experience: 'max3' },
+  ]);
+});

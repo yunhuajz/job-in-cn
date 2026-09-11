@@ -77,7 +77,9 @@ export default function CrawlerPanel() {
         ? crawlerPlanSchema.parse({ ...plan, rounds })
         : plan;
       const next = action === 'save' || action === 'start' ? crawlerConfigSchema.parse({ ...config, keywords: splitTerms(keywords), cities: splitTerms(cities) }) : undefined;
-      const nextConfigs = next ? configs.map((item) => item.platform === platform ? next : item) : undefined;
+      const nextConfigs = next ? configs.map((item) => nextPlan.platforms.includes(item.platform)
+        ? crawlerConfigSchema.parse({ ...next, platform: item.platform })
+        : item) : undefined;
       const requestAction = action === 'pause-1' || action === 'pause-2' ? 'pause' : action;
       const response = await fetch('/api/local/crawler', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: requestAction, hours: action === 'pause-1' ? 1 : action === 'pause-2' ? 2 : undefined, config: next, configs: nextConfigs, plan: nextPlan }),
@@ -100,10 +102,10 @@ export default function CrawlerPanel() {
       <div className="mb-6 flex items-center gap-3"><span className="rounded-lg bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">01</span><h2 className="font-semibold">配置采集计划</h2></div>
       <fieldset disabled={busy} className="space-y-5">
         <div className="grid gap-6 rounded-xl border border-primary/15 bg-primary/5 p-5 sm:grid-cols-[1fr_160px]">
-          <div><div className="text-sm font-medium">采集平台</div><p className="mt-1 text-xs text-muted-foreground">勾选决定本轮参与采集的平台；点击平台名称编辑它的搜索条件。</p><div className="mt-3 flex flex-wrap gap-2">{platforms.map((item) => <div key={item} className={`flex items-center rounded-lg border bg-background transition-colors ${platform === item ? 'border-primary ring-2 ring-primary/10' : ''}`}><label className="flex items-center px-3"><input type="checkbox" aria-label={`启用${platformNames[item]}`} checked={plan.platforms.includes(item)} disabled={plan.platforms.length === 1 && plan.platforms[0] === item} onChange={(event) => togglePlatform(item, event.target.checked)} /></label><button type="button" aria-label={`编辑${platformNames[item]}配置`} className="py-2.5 pr-3 text-sm font-medium" onClick={() => editPlatform(item)}>{platformNames[item]}</button></div>)}</div></div>
+          <div><div className="text-sm font-medium">采集平台</div><p className="mt-1 text-xs text-muted-foreground">勾选决定本轮参与采集的平台；保存或开始后，下方条件会同步到所有已启用平台。</p><div className="mt-3 flex flex-wrap gap-2">{platforms.map((item) => <div key={item} className={`flex items-center rounded-lg border bg-background transition-colors ${platform === item ? 'border-primary ring-2 ring-primary/10' : ''}`}><label className="flex items-center px-3"><input type="checkbox" aria-label={`启用${platformNames[item]}`} checked={plan.platforms.includes(item)} disabled={plan.platforms.length === 1 && plan.platforms[0] === item} onChange={(event) => togglePlatform(item, event.target.checked)} /></label><button type="button" aria-label={`编辑${platformNames[item]}配置`} className="py-2.5 pr-3 text-sm font-medium" onClick={() => editPlatform(item)}>{platformNames[item]}</button></div>)}</div></div>
           <label className="text-sm font-medium">采集轮次<input aria-label="采集轮次" className={fieldClass} type="number" min="1" max="1000" value={roundsInput} onChange={(event) => { setRoundsInput(event.target.value); setNotice('采集计划已修改，保存或开始采集后生效'); }} /><span className="mt-1 block text-xs font-normal text-muted-foreground">最多 1000 轮；需要整夜运行时可填写 100 至 500 轮，随时可以停止。</span></label>
         </div>
-        <div className="flex items-center justify-between border-b pb-3"><div><p className="text-xs text-muted-foreground">正在编辑</p><h3 className="mt-1 font-semibold">{platformNames[platform]} · 搜索条件</h3></div>{!plan.platforms.includes(platform) && <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">本轮未启用</span>}</div>
+        <div className="flex items-center justify-between border-b pb-3"><div><p className="text-xs text-muted-foreground">正在编辑</p><h3 className="mt-1 font-semibold">统一搜索条件</h3><p className="mt-1 text-xs text-muted-foreground">保存或开始采集时，这些条件会同步到所有已启用平台。</p></div>{!plan.platforms.includes(platform) && <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{platformNames[platform]}本轮未启用</span>}</div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-medium">搜索关键词
             <textarea className={fieldClass} rows={3} value={keywords} onChange={(e) => { setKeywords(e.target.value); setNotice('配置已修改'); }} placeholder="每行一个关键词，也可用逗号分隔" />
@@ -114,6 +116,7 @@ export default function CrawlerPanel() {
         </div>
         <p className="text-xs text-muted-foreground">关键词与城市逐组搜索。智联未配置城市码的城市会全国搜索后按地点筛选；也可输入招聘网站城市码。</p>
         <div className="border-t pt-5"><PreferenceFields value={config} onChange={update} /></div>
+        {config.experience !== 'any' && config.keepUnknown && <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">当前仍会保留没有明确标注工作年限的岗位。如需严格排除无法判断年限的岗位，请取消勾选“保留无法判断条件的岗位”。</p>}
         <p className="text-xs text-muted-foreground">地点、工作年限、薪资和双休在采集时初筛并后置校验。日薪、时薪与面议不折算为月薪，无法判断的条件标为未知。</p>
         <label className="block max-w-xs text-sm font-medium">每组最多采集条数
           <input className={fieldClass} type="number" min="1" max="50" value={config.limit} onChange={(e) => update({ limit: Number(e.target.value) })} />
