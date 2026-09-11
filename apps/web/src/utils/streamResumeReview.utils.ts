@@ -65,7 +65,7 @@ export async function streamResumeReview({
 
   // Pre-generation failures (auth, rate limit, preprocessing) still return JSON.
   if (!res.ok || !res.body) {
-    let message = "Failed to get AI review.";
+    let message = "获取 AI 简历评价失败。";
     try {
       const err = await res.json();
       if (err?.error) message = err.error;
@@ -94,7 +94,7 @@ export async function streamResumeReview({
   const final = parse(raw);
   if (!final.body && !final.scores) {
     throw new Error(
-      "The AI service returned no data. Please ensure it is running and try again.",
+      "AI 服务没有返回评价内容，请检查 AI 设置后重试。",
     );
   }
   onUpdate?.(final);

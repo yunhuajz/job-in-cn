@@ -12,7 +12,7 @@ export const warnInsufficientResumeSections = (
 ): void => {
   toast({
     variant: "destructive",
-    title: "Not enough content",
+    title: "简历内容不足",
     description: buildInsufficientSectionsMessage(action, hint),
   });
 };

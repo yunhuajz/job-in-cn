@@ -12,7 +12,7 @@ describe("warnInsufficientResumeSections", () => {
 
     expect(mockToast).toHaveBeenCalledWith({
       variant: "destructive",
-      title: "Not enough content",
+      title: "简历内容不足",
       description: buildInsufficientSectionsMessage(
         "setting this resume as default",
       ),
@@ -27,7 +27,7 @@ describe("warnInsufficientResumeSections", () => {
 
     expect(mockToast).toHaveBeenCalledWith({
       variant: "destructive",
-      title: "Not enough content",
+      title: "简历内容不足",
       description: buildInsufficientSectionsMessage(
         "running a review",
         "e.g. Summary and Experience",

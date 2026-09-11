@@ -11,10 +11,12 @@ import {
   buildResumeReviewPrompt,
   AIUnavailableError,
   preprocessResume,
+  preprocessText,
 } from "@/lib/ai";
 import { APP_CONSTANTS } from "@/lib/constants";
 import { getResumeById } from "@/actions/profile.actions";
 import { AiModel } from "@/models/ai.model";
+import { extractResumeFileText } from "@/lib/jobs/extractResumeFileText";
 
 /**
  * Resume Review Endpoint
@@ -61,7 +63,13 @@ export const POST = async (req: NextRequest) => {
   }
 
   try {
-    const preprocessResult = await preprocessResume(resumeResult.data);
+    let preprocessResult = await preprocessResume(resumeResult.data);
+    if (!preprocessResult.success && resumeResult.data.File?.filePath) {
+      const fileText = await extractResumeFileText(
+        resumeResult.data.File.filePath,
+      );
+      if (fileText) preprocessResult = await preprocessText(fileText);
+    }
     if (!preprocessResult.success) {
       return NextResponse.json(
         {

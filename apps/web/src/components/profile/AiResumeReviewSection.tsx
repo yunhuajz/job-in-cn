@@ -129,7 +129,11 @@ const AiResumeReviewSection = ({ resume, onReviewSaved }: AiSectionProps) => {
   );
 
   const getResumeReview = async () => {
-    if (!resume || !hasMinResumeSections(resume.ResumeSections?.length)) {
+    const hasAttachment = !!resume?.File?.filePath;
+    if (
+      !resume ||
+      (!hasAttachment && !hasMinResumeSections(resume.ResumeSections?.length))
+    ) {
       warnInsufficientResumeSections(
         "running a review",
         "e.g. Summary and Experience",

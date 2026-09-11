@@ -111,7 +111,7 @@ describe("Default Resume Actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "Add at least 2 sections before setting this resume as default.",
+        message: "至少添加 2 个简历分区后才能设为默认简历。",
       });
       expect(prisma.user.update).not.toHaveBeenCalled();
     });

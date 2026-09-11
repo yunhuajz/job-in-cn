@@ -28,7 +28,7 @@ describe("hasMinResumeSections", () => {
 });
 
 describe("buildInsufficientSectionsMessage", () => {
-  it("includes the minimum count and the action", () => {
+  it("returns a Chinese message for setting the default resume", () => {
     const message = buildInsufficientSectionsMessage(
       "setting this resume as default",
     );
@@ -36,16 +36,16 @@ describe("buildInsufficientSectionsMessage", () => {
     expect(message).toContain(
       String(APP_CONSTANTS.MIN_RESUME_SECTIONS_FOR_SELECTION),
     );
-    expect(message).toContain("setting this resume as default");
+    expect(message).toContain("设为默认简历");
   });
 
-  it("appends the hint in parentheses when provided", () => {
+  it("includes a Chinese example when the review hint is provided", () => {
     const message = buildInsufficientSectionsMessage(
       "running a review",
       "e.g. Summary and Experience",
     );
 
-    expect(message).toContain("(e.g. Summary and Experience)");
+    expect(message).toContain("（例如个人简介和工作经历）");
   });
 
   it("omits the parentheses when no hint is provided", () => {

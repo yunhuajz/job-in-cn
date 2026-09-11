@@ -98,6 +98,17 @@ const makeResume = (sectionCount: number): Resume => ({
   })),
 });
 
+const makeAttachedResume = (): Resume => ({
+  ...makeResume(0),
+  FileId: "file-1",
+  File: {
+    id: "file-1",
+    fileName: "resume.pdf",
+    filePath: "uploads/resume.pdf",
+    fileType: "resume",
+  },
+});
+
 const getGenerateButton = () =>
   screen.queryAllByRole("button", { name: /生成 AI 评价/i })[0];
 
@@ -140,16 +151,27 @@ describe("AiResumeReviewSection – Generate AI Review button", () => {
     });
   });
 
-  it("shows toast error when resume has fewer than 2 sections", () => {
+  it("shows a Chinese error when a resume has neither enough sections nor an attachment", () => {
     render(<AiResumeReviewSection resume={makeResume(1)} />);
     fireEvent.click(getGenerateButton());
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "destructive",
-        title: "Not enough content",
+        title: "简历内容不足",
       }),
     );
     expect(mockStreamResumeReview).not.toHaveBeenCalled();
+  });
+
+  it("allows reviewing an attached resume before imported sections are confirmed", () => {
+    const resume = makeAttachedResume();
+    render(<AiResumeReviewSection resume={resume} />);
+
+    fireEvent.click(getGenerateButton());
+
+    expect(mockStreamResumeReview).toHaveBeenCalledWith(
+      expect.objectContaining({ resumeId: resume.id }),
+    );
   });
 
   it("calls streamResumeReview with the resume id when generate is clicked", () => {
