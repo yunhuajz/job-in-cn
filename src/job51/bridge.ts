@@ -1,6 +1,7 @@
 import { runOpencli } from '../boss/opencli.js';
 
 type OpencliRunner = (args: string[]) => Promise<unknown>;
+const JOB51_SEARCH_URL = 'https://we.51job.com/pc/search';
 
 // opencli 51job(前程无忧)站点适配器封装 — Boss 风控期间的备用采集源
 // 与 boss/bridge.ts 同一模式:复用日常 Chrome,后台窗口执行
@@ -15,6 +16,16 @@ const SESSION_ARGS = [
   '-f',
   'json',
 ];
+
+async function withSessionRecovery<T>(run: OpencliRunner, action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    if (!/stale page identity|Page not found/i.test(String(error))) throw error;
+    await run(['browser', 'default', 'tab', 'new', JOB51_SEARCH_URL]);
+    return action();
+  }
+}
 
 export interface Job51Card {
   jobId: string;
@@ -56,13 +67,20 @@ export async function search51Jobs(
   ];
   if (experience) args.push('--experience', experience);
   args.push(...SESSION_ARGS);
-  const result = await run(args);
+  const result = await withSessionRecovery(run, () => run(args));
   return Array.isArray(result) ? (result as Job51Card[]) : [];
 }
 
 // 详情只取 JD 正文;标题/公司等以搜索卡片为准(详情页 title 字段实测不可靠)
-export async function get51JobDescription(jobId: string): Promise<string | null> {
-  const result = await runOpencli(['51job', 'detail', jobId, ...SESSION_ARGS]);
+export async function get51JobDescription(jobId: string, run: OpencliRunner = runOpencli): Promise<string | null> {
+  let result: unknown;
+  try {
+    result = await withSessionRecovery(run, () => run(['51job', 'detail', jobId, ...SESSION_ARGS]));
+  } catch (error) {
+    // 详情标签页连续失效时保留搜索卡片，不能因此终止整夜采集。
+    if (/stale page identity|Page not found/i.test(String(error))) return null;
+    throw error;
+  }
   if (Array.isArray(result)) {
     const first = result[0] as { description?: unknown } | undefined;
     if (first && typeof first.description === 'string' && first.description.length > 0) {
