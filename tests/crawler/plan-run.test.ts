@@ -82,6 +82,30 @@ exitCode: 77`;
   expect(run.snapshot()).toMatchObject({ status: 'completed', added: 2, blockedPlatforms: { boss: authError } });
 });
 
+it('Boss API 临时超时只跳过当前组，其他平台和后续组继续采集', async () => {
+  const timeoutError = `opencli 执行失败(exit 1):ok: false
+error:
+  code: COMMAND_EXEC
+  message: |-
+    Boss API request failed: Error: Timeout
+        at xhr.ontimeout (<anonymous>:14:38)
+  exitCode: 1`;
+  const visited: string[] = [];
+  const run = new CrawlPlanRun(async function* (config, group) {
+    visited.push(`${config.platform}:${group.query}`);
+    if (config.platform === 'boss' && group.query === '第一组') throw new Error(timeoutError);
+    yield { company: '公司', jobTitle: '继续采集', jobDescription: '', location: '济南', source: config.platform, jobUrl: `https://example.test/${config.platform}/${group.query}`, salaryRange: '10-15K', tags: [] };
+  });
+  const configs = ['boss', 'job51'].map((platform) => crawlerConfigSchema.parse({ platform, keywords: ['第一组', '第二组'], cities: ['济南'] }));
+
+  run.start(crawlerPlanSchema.parse({ platforms: ['boss', 'job51'], rounds: 1 }), configs, async () => ({ created: true }));
+  await run.finished();
+
+  expect(visited).toEqual(['boss:第一组', 'job51:第一组', 'boss:第二组', 'job51:第二组']);
+  expect(run.snapshot()).toMatchObject({ status: 'completed', added: 3, errors: 1, blockedPlatforms: {} });
+  expect(run.snapshot().logs.some((line) => line.includes('boss 当前搜索组超时，已跳过'))).toBe(true);
+});
+
 it('采集在下一个搜索组前执行平台间隔', async () => {
   let waits = 0;
   const run = new CrawlPlanRun(async function* (config) {

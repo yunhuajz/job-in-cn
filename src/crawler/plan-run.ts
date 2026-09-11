@@ -143,10 +143,15 @@ export class CrawlPlanRun {
             } catch (error) {
               if (signal.aborted) return;
               const message = error instanceof Error ? error.message : String(error);
-              if (!needsUserCheck(message)) throw error;
-              this.state.errors += 1;
-              this.state.blockedPlatforms = { ...this.state.blockedPlatforms, [platform]: message };
-              this.log(`${platform} 已暂停：${message}`);
+              if (isTransientNetworkError(message)) {
+                this.state.errors += 1;
+                this.log(`${platform} 当前搜索组超时，已跳过；将在后续搜索组再次尝试。`);
+              } else {
+                if (!needsUserCheck(message)) throw error;
+                this.state.errors += 1;
+                this.state.blockedPlatforms = { ...this.state.blockedPlatforms, [platform]: message };
+                this.log(`${platform} 已暂停：${message}`);
+              }
             }
             if (this.hasNextGroup(plan, groups, round, index, platform)) await this.waitBetweenGroups(signal, this.log);
           }
@@ -189,4 +194,8 @@ export class CrawlPlanRun {
 
 function needsUserCheck(message: string): boolean {
   return /验证|滑块|slider|验证码|账号异常|存在风险|风险|登录|security|AUTH_REQUIRED|authentication required|authenticated|log\s*in|sign\s*in/i.test(message);
+}
+
+function isTransientNetworkError(message: string): boolean {
+  return /\bTimeout\b|timed out|ETIMEDOUT|ECONNRESET|socket hang up/i.test(message);
 }
