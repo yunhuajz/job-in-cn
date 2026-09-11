@@ -126,9 +126,14 @@ export const POST = async (req: NextRequest) => {
     // background until it finishes or hits the timeout.
     req.signal.addEventListener("abort", () => controller.abort());
 
+    let generationError: unknown;
+    const output =
+      String(selectedModel.provider) === "openai-compatible"
+        ? Output.json()
+        : Output.object({ schema: ResumeImportSchema });
     const result = streamText({
       model,
-      output: Output.object({ schema: ResumeImportSchema }),
+      output,
       system: RESUME_IMPORT_SYSTEM_PROMPT,
       prompt: buildResumeImportPrompt(preprocessResult.data.normalizedText),
       temperature: TEMPERATURES.ANALYSIS,
@@ -141,6 +146,7 @@ export const POST = async (req: NextRequest) => {
       },
       onError: ({ error }) => {
         clearTimeout(timer);
+        generationError = error;
         console.error("Resume import stream error:", error);
       },
     });
@@ -157,11 +163,18 @@ export const POST = async (req: NextRequest) => {
           for await (const partial of result.partialOutputStream) {
             controller.enqueue(encoder.encode(JSON.stringify(partial) + "\n"));
           }
+          if (generationError) throw generationError;
         } catch (err) {
-          // Abort/network errors: close cleanly so the client salvages the
-          // last complete snapshot. onError already logged it.
           console.error("Resume import stream interrupted:", err);
+          const message =
+            err instanceof Error ? err.message : "AI 服务生成简历内容失败";
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({ error: `简历整理失败：${message}` }) + "\n",
+            ),
+          );
         } finally {
+          clearTimeout(timer);
           controller.close();
         }
       },

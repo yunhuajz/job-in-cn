@@ -53,6 +53,7 @@ export async function streamResumeImport({
   const decoder = new TextDecoder();
   let buffer = "";
   let latest: DeepPartial<ResumeImportData> | undefined;
+  let streamError: string | undefined;
 
   const handleLine = (line: string) => {
     const trimmed = line.trim();
@@ -60,6 +61,10 @@ export async function streamResumeImport({
     try {
       const obj = JSON.parse(trimmed);
       if (obj && typeof obj === "object") {
+        if (typeof obj.error === "string") {
+          streamError = obj.error;
+          return;
+        }
         latest = obj as DeepPartial<ResumeImportData>;
         onPartial?.(latest);
       }
@@ -85,9 +90,13 @@ export async function streamResumeImport({
   }
   handleLine(buffer); // flush a final newline-less line
 
+  if (streamError) {
+    throw new Error(streamError);
+  }
+
   if (!latest || typeof latest !== "object") {
     throw new Error(
-      "The AI service returned no data. Please ensure it is running and try again.",
+      "AI 服务没有返回简历内容。请检查“AI 设置”中的接口格式和模型名称后重试。",
     );
   }
 

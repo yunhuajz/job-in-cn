@@ -113,4 +113,30 @@ describe("streamResumeImport", () => {
       streamResumeImport({ resumeId: "r1", selectedModel }),
     ).rejects.toThrow("Rate limit exceeded.");
   });
+
+  it("throws the generation error carried by a successful NDJSON response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        streamingResponse([
+          '{"error":"模型拒绝了结构化输出，请检查所选模型和接口格式。"}\n',
+        ]),
+      ),
+    );
+
+    await expect(
+      streamResumeImport({ resumeId: "r1", selectedModel }),
+    ).rejects.toThrow("模型拒绝了结构化输出，请检查所选模型和接口格式。");
+  });
+
+  it("uses a Chinese message when a successful stream contains no data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(streamingResponse([])),
+    );
+
+    await expect(
+      streamResumeImport({ resumeId: "r1", selectedModel }),
+    ).rejects.toThrow("AI 服务没有返回简历内容");
+  });
 });
