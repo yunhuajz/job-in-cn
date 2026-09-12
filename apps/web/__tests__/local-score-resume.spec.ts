@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { extractResumeFileText } from "@/lib/jobs/extractResumeFileText";
+import { extractResumeFileText } from "@/lib/resume";
 import fs from "fs";
 
 describe("local score resume file fallback", () => {

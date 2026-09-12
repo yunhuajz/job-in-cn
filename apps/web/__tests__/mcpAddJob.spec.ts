@@ -1,6 +1,6 @@
 import { handleAddJob } from "@/lib/mcp/tools/addJob";
 import { createJobFromNames } from "@/lib/jobs/createJobFromNames";
-import { getDefaultResumeForUser } from "@/lib/jobs/getDefaultResumeForUser";
+import { getDefaultResumeForUser } from "@/lib/resume";
 import { preprocessResume } from "@/lib/ai/tools/preprocessing";
 import { checkMcpRateLimit } from "@/lib/mcp/rate-limit";
 
@@ -8,7 +8,7 @@ vi.mock("@/lib/jobs/createJobFromNames", () => ({
   createJobFromNames: vi.fn(),
 }));
 
-vi.mock("@/lib/jobs/getDefaultResumeForUser", () => ({
+vi.mock("@/lib/resume", () => ({
   getDefaultResumeForUser: vi.fn(),
 }));
 

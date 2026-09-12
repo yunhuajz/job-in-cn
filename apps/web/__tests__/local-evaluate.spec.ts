@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { evaluateJobsForUser } from "@/lib/ai/evaluate";
 import prisma from "@/lib/db";
-import { getDefaultResumeForUser } from "@/lib/jobs/getDefaultResumeForUser";
+import { getDefaultResumeForUser } from "@/lib/resume";
 
 vi.mock("@/lib/db", () => ({
   default: {
@@ -15,11 +15,8 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-vi.mock("@/lib/jobs/getDefaultResumeForUser", () => ({
+vi.mock("@/lib/resume", () => ({
   getDefaultResumeForUser: vi.fn(),
-}));
-
-vi.mock("@/lib/jobs/extractResumeFileText", () => ({
   extractResumeFileText: vi.fn(),
 }));
 

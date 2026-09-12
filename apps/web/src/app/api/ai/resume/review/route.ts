@@ -16,7 +16,7 @@ import {
 import { APP_CONSTANTS } from "@/lib/constants";
 import { getResumeById } from "@/actions/profile.actions";
 import { AiModel } from "@/models/ai.model";
-import { extractResumeFileText } from "@/lib/jobs/extractResumeFileText";
+import { extractResumeFileText } from "@/lib/resume";
 
 /**
  * Resume Review Endpoint

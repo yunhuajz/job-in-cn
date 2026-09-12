@@ -1,7 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/db";
-import { getDefaultResumeForUser } from "@/lib/jobs/getDefaultResumeForUser";
+import { extractResumeFileText, getDefaultResumeForUser } from "@/lib/resume";
 import {
   buildJobMatchPrompt,
   JOB_MATCH_SYSTEM_PROMPT,
@@ -9,7 +9,6 @@ import {
   preprocessResume,
   preprocessText,
 } from "@/lib/ai";
-import { extractResumeFileText } from "@/lib/jobs/extractResumeFileText";
 import { getModel, type ProviderType } from "@/lib/ai/providers";
 import { defaultUserSettings, type UserSettingsData } from "@/models/userSettings.model";
 import { generateText } from "ai";

@@ -3,7 +3,7 @@ import { APP_CONSTANTS } from "@/lib/constants";
 import { McpAddJobSchema } from "@/models/mcp.schema";
 import { createJobFromNames } from "@/lib/jobs/createJobFromNames";
 import { checkMcpRateLimit } from "@/lib/mcp/rate-limit";
-import { getDefaultResumeForUser } from "@/lib/jobs/getDefaultResumeForUser";
+import { getDefaultResumeForUser } from "@/lib/resume";
 import { preprocessResume } from "@/lib/ai/tools/preprocessing";
 
 export const addJobToolDefinition = {

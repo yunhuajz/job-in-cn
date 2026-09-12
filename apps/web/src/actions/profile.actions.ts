@@ -14,7 +14,7 @@ import {
 } from "@/models/skills.schema";
 import { getCurrentUser } from "@/utils/user.utils";
 import { APP_CONSTANTS } from "@/lib/constants";
-import { resumeDetailInclude } from "@/lib/jobs/resumeDetailInclude";
+import { resumeDetailInclude } from "@/lib/resume";
 import {
   buildInsufficientSectionsMessage,
   hasMinResumeSections,
