@@ -804,9 +804,9 @@ function ResumeContainer({
             )}
           </div>
           <CardDescription className="mt-0 lg:flex lg:justify-center">
-            {resume.FileId && resume.File?.filePath
+            {resume?.id && resume.FileId && resume.File?.filePath
               ? DownloadFileButton(
-                  resume.File?.filePath,
+                  resume.id,
                   title,
                   resume.File?.fileName,
                 )

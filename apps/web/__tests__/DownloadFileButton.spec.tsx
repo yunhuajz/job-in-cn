@@ -7,7 +7,7 @@ describe("DownloadFileButton", () => {
 
     render(
       DownloadFileButton(
-        "data/files/resumes/resume.pdf",
+        "resume-123",
         "刘玉浩 简历",
         "resume.pdf",
       ),
@@ -15,7 +15,7 @@ describe("DownloadFileButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "查看附件 resume.pdf" }));
 
     expect(open).toHaveBeenCalledWith(
-      "/api/profile/resume?filePath=data%2Ffiles%2Fresumes%2Fresume.pdf&mode=preview",
+      "/api/profile/resume?resumeId=resume-123&mode=preview",
       "_blank",
       "noopener,noreferrer",
     );
@@ -27,7 +27,7 @@ describe("DownloadFileButton", () => {
       vi.fn().mockResolvedValue(new Response("resume", { status: 200 })),
     );
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    render(DownloadFileButton("resume.pdf", "我的简历", "resume.pdf"));
+    render(DownloadFileButton("resume-123", "我的简历", "resume.pdf"));
 
     fireEvent.click(screen.getByRole("button", { name: "下载附件 resume.pdf" }));
 

@@ -11,6 +11,7 @@ import fs from "fs";
 import { getTimestampedFileName } from "@/lib/utils";
 import { APP_CONSTANTS } from "@/lib/constants";
 import { extractText, PDF_MAGIC, ZIP_MAGIC } from "@/lib/ai/import/extract-text";
+import prisma from "@/lib/db";
 
 const ALLOWED_MIME = new Set<string>(APP_CONSTANTS.RESUME_ALLOWED_MIME_TYPES);
 
@@ -118,23 +119,39 @@ export const GET = async (req: NextRequest) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const filePath = searchParams.get("filePath");
+    const resumeId = searchParams.get("resumeId");
     const preview = searchParams.get("mode") === "preview";
 
-    if (!filePath) {
+    if (!resumeId) {
       return NextResponse.json(
-        { error: "File path is required" },
+        { error: "Resume ID is required" },
         { status: 400 }
       );
     }
 
-    const fullFilePath = path.join(filePath);
+    const resume = await prisma.resume.findUnique({
+      where: { id: resumeId },
+      include: {
+        File: true,
+        profile: { select: { userId: true } },
+      },
+    });
+
+    if (!resume || !resume.File) {
+      return NextResponse.json({ error: "Resume or file not found" }, { status: 404 });
+    }
+
+    if (resume.profile.userId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const fullFilePath = path.join(resume.File.filePath);
     if (!fs.existsSync(fullFilePath)) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+      return NextResponse.json({ error: "File not found on disk" }, { status: 404 });
     }
 
     const fileType = path.extname(fullFilePath).toLowerCase();
-    const fileName = path.basename(fullFilePath);
+    const fileName = resume.File.fileName || path.basename(fullFilePath);
 
     let contentType;
 

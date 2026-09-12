@@ -267,9 +267,9 @@ function JobDetails({
                   )}
                 </div>
               )}
-              {job?.Resume && job?.Resume?.File && job.Resume?.File?.filePath
+              {job?.Resume?.id && job?.Resume?.File && job.Resume?.File?.filePath
                 ? DownloadFileButton(
-                    job?.Resume?.File?.filePath,
+                    job.Resume.id,
                     job?.Resume?.title,
                     job?.Resume?.File?.fileName,
                   )

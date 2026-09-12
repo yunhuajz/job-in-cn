@@ -1,11 +1,11 @@
 import { Download, Paperclip } from "lucide-react";
 
 export function DownloadFileButton(
-  filePath: string,
+  resumeId: string,
   fileTitle: string,
   fileName: string,
 ) {
-  const fileUrl = `/api/profile/resume?filePath=${encodeURIComponent(filePath)}`;
+  const fileUrl = `/api/profile/resume?resumeId=${encodeURIComponent(resumeId)}`;
 
   const handlePreview = () => {
     window.open(`${fileUrl}&mode=preview`, "_blank", "noopener,noreferrer");
