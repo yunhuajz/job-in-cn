@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { configStore, crawler } from "@/lib/local/crawler";
-import { recordCrawledJob } from "@/lib/local/jobs";
-import { crawlerConfigSchema, crawlerPlanSchema, platforms } from "../../../../../../../src/crawler/config";
+import { ingestJob } from "@/lib/jobs/ingest";
+import { crawlerConfigSchema, crawlerPlanSchema, platforms } from "@core/crawler/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       const checkpoint = configStore.readCheckpoint();
       if (!checkpoint) return Response.json({ error: "没有可恢复的采集任务" }, { status: 400 });
       if (['running', 'paused', 'stopping'].includes(crawler.snapshot().status)) return Response.json({ error: "正在采集，请先停止当前任务" }, { status: 409 });
-      crawler.start(checkpoint.plan, checkpoint.configs, (job) => recordCrawledJob({ ...job, createdVia: "jbcn" }, session.user.id), checkpoint.next);
+      crawler.start(checkpoint.plan, checkpoint.configs, (job) => ingestJob({ ...job, createdVia: "jbcn" }, session.user.id), checkpoint.next);
     } else if (body.action === "stop") crawler.stop();
     else if (body.action === "pause") {
       const hours = body.hours === 1 || body.hours === 2 ? body.hours : null;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         configStore.save(config);
         for (const item of configs) configStore.save(item);
         configStore.savePlan(plan);
-        crawler.start(plan, configs, (job) => recordCrawledJob({ ...job, createdVia: "jbcn" }, session.user.id));
+        crawler.start(plan, configs, (job) => ingestJob({ ...job, createdVia: "jbcn" }, session.user.id));
       } else {
         const configs = Array.isArray(body.configs) ? body.configs.map((item: unknown) => crawlerConfigSchema.parse(item)) : [config];
         for (const item of configs) configStore.save(item);

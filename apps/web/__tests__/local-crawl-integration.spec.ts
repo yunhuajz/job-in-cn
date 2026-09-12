@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { createAjsTestDb } from "./helpers/ajsTestDb";
-import { CrawlRun } from "../../../src/crawler/run";
-import { crawlerConfigSchema } from "../../../src/crawler/config";
+import { CrawlRun } from "@core/crawler/run";
+import { crawlerConfigSchema } from "@core/crawler/config";
 
 let database: ReturnType<typeof createAjsTestDb>;
 beforeAll(async () => {

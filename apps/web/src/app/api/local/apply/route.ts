@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
-import { createOpencliGreetIO, runGreetingBatch } from "../../../../../../../src/boss/greet";
+import { createOpencliGreetIO, runGreetingBatch } from "@core/boss/greet";
 import { z } from "zod";
 
 export const runtime = "nodejs";

@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@", replacement: path.resolve(__dirname, "./src") },
+      { find: "@core", replacement: path.resolve(__dirname, "../../src") },
       {
         find: "@prisma/client",
         replacement: path.resolve(__dirname, "./node_modules/@prisma/client"),

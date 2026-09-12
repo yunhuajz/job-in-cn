@@ -1,8 +1,8 @@
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { ConfigStore } from "../../../../../src/crawler/store";
-import { CrawlPlanRun } from "../../../../../src/crawler/plan-run";
-import { collectSearchGroup } from "../../../../../src/crawler/sources";
+import { ConfigStore } from "@core/crawler/store";
+import { CrawlPlanRun } from "@core/crawler/plan-run";
+import { collectSearchGroup } from "@core/crawler/sources";
 import prisma from "@/lib/db";
 
 export const projectRoot = process.env.JBCN_ROOT ?? path.resolve(process.cwd(), "../..");

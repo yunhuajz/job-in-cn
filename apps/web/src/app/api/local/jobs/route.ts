@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
-import { recordCrawledJob } from "@/lib/local/jobs";
+import { ingestJob } from "@/lib/jobs/ingest";
 import { crawlerConfigSchema, matchesPreferences, monthlySalary, weekendStatus } from "@/lib/local/preferences";
 import { z } from "zod";
 
@@ -213,7 +213,7 @@ export async function POST(request: Request) {
     const raw = await request.json();
     const body = postJobSchema.parse(raw);
 
-    const result = await recordCrawledJob(
+    const result = await ingestJob(
       {
         company: body.company,
         jobTitle: body.jobTitle,
@@ -232,7 +232,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         created: result.created,
-        jobId: result.jobId ?? result.duplicateOf?.id,
+        jobId: result.jobId,
         duplicateOf: result.duplicateOf,
         message: result.message,
       },

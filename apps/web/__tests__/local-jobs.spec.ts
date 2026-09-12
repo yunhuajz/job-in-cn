@@ -1,11 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { DELETE, GET, POST } from "@/app/api/local/jobs/route";
 
-vi.mock("@/lib/local/jobs", () => ({
-  recordCrawledJob: vi.fn(async (input: any, _userId: string) => {
+vi.mock("@/lib/jobs/ingest", () => ({
+  ingestJob: vi.fn(async (input: any, _userId: string) => {
     if (input.jobUrl === "https://duplicate.test") {
       return {
         created: false,
+        jobId: "existing-job-id",
         duplicateOf: { id: "existing-job-id", title: input.jobTitle, company: input.company },
         resolutions: [],
         message: "Duplicate detected",
