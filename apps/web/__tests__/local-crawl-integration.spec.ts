@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { createAjsTestDb } from "./helpers/ajsTestDb";
-import { CrawlRun } from "@core/crawler/run";
-import { crawlerConfigSchema } from "@core/crawler/config";
+import { CrawlPlanRun } from "@core/crawler/plan-run";
+import { crawlerConfigSchema, crawlerPlanSchema } from "@core/crawler/config";
 
 let database: ReturnType<typeof createAjsTestDb>;
 beforeAll(async () => {
@@ -24,8 +24,12 @@ it("采集结果进入原账号的岗位列表，同一 URL 重采不重复入�
   const { createJobFromNames } = await import("@/lib/jobs/createJobFromNames");
   const { GET } = await import("@/app/api/local/jobs/route");
   const job = { company: "测试公司", jobTitle: "开发工程师", salaryRange: "8-12K", jobDescription: "周末双休", location: "天津", source: "Boss直聘", jobUrl: "https://www.zhipin.com/job_detail/test.html", tags: [] };
-  const run = new CrawlRun(async function* () { yield job; yield job; });
-  run.start(crawlerConfigSchema.parse({ keywords: ["开发"], cities: ["天津"] }), (input) => createJobFromNames(input, "local-owner"));
+  const run = new CrawlPlanRun(async function* () { yield job; yield job; });
+  run.start(
+    crawlerPlanSchema.parse({ platforms: ["boss"], rounds: 1 }),
+    [crawlerConfigSchema.parse({ platform: "boss", keywords: ["开发"], cities: ["天津"] })],
+    (input) => createJobFromNames(input, "local-owner"),
+  );
   await run.finished();
   expect(run.snapshot()).toMatchObject({ status: "completed", added: 1, duplicates: 1 });
   const response = await GET(new Request("http://127.0.0.1:3737/api/local/jobs"));
