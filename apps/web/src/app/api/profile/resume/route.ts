@@ -10,7 +10,7 @@ import path from "path";
 import fs from "fs";
 import { getTimestampedFileName } from "@/lib/utils";
 import { APP_CONSTANTS } from "@/lib/constants";
-import { PDF_MAGIC, ZIP_MAGIC } from "@/lib/ai/import/extract-text";
+import { extractText, PDF_MAGIC, ZIP_MAGIC } from "@/lib/ai/import/extract-text";
 
 const ALLOWED_MIME = new Set<string>(APP_CONSTANTS.RESUME_ALLOWED_MIME_TYPES);
 
@@ -119,6 +119,7 @@ export const GET = async (req: NextRequest) => {
 
     const { searchParams } = new URL(req.url);
     const filePath = searchParams.get("filePath");
+    const preview = searchParams.get("mode") === "preview";
 
     if (!filePath) {
       return NextResponse.json(
@@ -151,12 +152,27 @@ export const GET = async (req: NextRequest) => {
 
     const fileContent = fs.readFileSync(fullFilePath);
 
+    if (preview && (fileType === ".doc" || fileType === ".docx")) {
+      const extracted = await extractText(fileContent);
+      if (!extracted.success) {
+        return NextResponse.json(
+          { error: "无法预览这份 Word 简历" },
+          { status: 422 },
+        );
+      }
+      return new NextResponse(extracted.data.text, {
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
     // Strip CR/LF from filename to prevent header injection
     const safeFileName = fileName.replace(/[\r\n"]/g, "_");
+    const asciiFileName = safeFileName.replace(/[^\x20-\x7E]/g, "_");
+    const encodedFileName = encodeURIComponent(safeFileName);
     const response = new NextResponse(fileContent, {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${safeFileName}"`,
+        "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="${asciiFileName}"; filename*=UTF-8''${encodedFileName}`,
       },
     });
 
