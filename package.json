@@ -9,16 +9,6 @@
   },
   "scripts": {
     "test": "vitest run",
-    "boss:harvest": "tsx src/boss/harvest.ts",
-    "boss:patrol": "tsx src/boss/patrol.ts",
-    "job51:harvest": "tsx src/job51/harvest.ts",
-    "zp:harvest": "tsx src/zhaopin/harvest.ts",
-    "boss:sync-replies": "tsx src/boss/sync-replies.ts",
-    "boss:greet": "tsx src/boss/greet-jobs.ts",
-    "daemon": "tsx src/daemon/index.ts",
-    "score": "tsx src/scoring/run.ts",
-    "score:dump": "tsx src/scoring/dump-unscored.ts",
-    "score:apply": "tsx src/scoring/apply-scores.ts",
     "profile:check": "tsx src/lib/profile-check.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"

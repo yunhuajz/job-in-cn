@@ -1,5 +1,24 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { DELETE, GET } from "@/app/api/local/jobs/route";
+import { DELETE, GET, POST } from "@/app/api/local/jobs/route";
+
+vi.mock("@/lib/local/jobs", () => ({
+  recordCrawledJob: vi.fn(async (input: any, _userId: string) => {
+    if (input.jobUrl === "https://duplicate.test") {
+      return {
+        created: false,
+        duplicateOf: { id: "existing-job-id", title: input.jobTitle, company: input.company },
+        resolutions: [],
+        message: "Duplicate detected",
+      };
+    }
+    return {
+      created: true,
+      jobId: "new-job-id",
+      resolutions: [],
+      message: "Job created",
+    };
+  }),
+}));
 
 vi.mock("@/lib/db", () => ({ default: {
   user: { findMany: vi.fn(async () => [{ id: "owner", name: "本地", email: "local@test.test" }]) },
@@ -81,3 +100,40 @@ it("删除旧岗位时移入可恢复的回收站", async () => {
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ deleted: 2, recoverable: true });
 });
+
+it("POST 录入新岗位返回 201 与 jobId", async () => {
+  vi.stubEnv("JBCN_LOCAL", "1");
+  const response = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobTitle: "前端工程师", company: "新星网络", salaryRange: "15-25K" }),
+  }));
+  expect(response.status).toBe(201);
+  const data = await response.json();
+  expect(data).toMatchObject({ created: true, jobId: "new-job-id" });
+});
+
+it("POST 录入已存在岗位幂等返回 200 与已有 jobId", async () => {
+  vi.stubEnv("JBCN_LOCAL", "1");
+  const response = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobTitle: "前端工程师", company: "新星网络", jobUrl: "https://duplicate.test" }),
+  }));
+  expect(response.status).toBe(200);
+  const data = await response.json();
+  expect(data).toMatchObject({ created: false, jobId: "existing-job-id" });
+});
+
+it("POST 缺少必填字段时返回 400 校验错误", async () => {
+  vi.stubEnv("JBCN_LOCAL", "1");
+  const response = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ company: "缺少标题的公司" }),
+  }));
+  expect(response.status).toBe(400);
+  const data = await response.json();
+  expect(data.error).toBeDefined();
+});
+

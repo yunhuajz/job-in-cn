@@ -107,3 +107,41 @@ it("AI 设置可从兼容接口获取模型列表", async () => {
     expect(request).toHaveBeenCalledWith(new URL("https://api.deepseek.com/models"), expect.objectContaining({ headers: expect.any(Object) }));
   } finally { vi.stubGlobal("fetch", originalFetch); }
 });
+
+it("POST /api/local/jobs 端点可直接录入岗位，且重复录入幂等更新采集记录", async () => {
+  const { POST, GET } = await import("@/app/api/local/jobs/route");
+  const newJob = {
+    jobTitle: "全栈工程师",
+    company: "极简科技",
+    salaryRange: "20-30K",
+    jobDescription: "精通 TypeScript 与 Next.js，支持双休",
+    location: "天津",
+    source: "外部录入",
+    jobUrl: "https://example.test/jobs/fullstack",
+  };
+  const res1 = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newJob),
+  }));
+  expect(res1.status).toBe(201);
+  const data1 = await res1.json();
+  expect(data1).toMatchObject({ created: true, jobId: expect.any(String) });
+
+  // 重复录入相同 jobUrl
+  const res2 = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newJob),
+  }));
+  expect(res2.status).toBe(200);
+  const data2 = await res2.json();
+  expect(data2).toMatchObject({ created: false, jobId: data1.jobId });
+
+  // 验证在 GET /api/local/jobs 中能查到
+  const listRes = await GET(new Request("http://127.0.0.1:3737/api/local/jobs?company=极简科技"));
+  const listData = await listRes.json();
+  expect(listData.total).toBe(1);
+  expect(listData.jobs[0]).toMatchObject({ id: data1.jobId, title: "全栈工程师", company: "极简科技" });
+});
+

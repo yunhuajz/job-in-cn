@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
+import { recordCrawledJob } from "@/lib/local/jobs";
 import { crawlerConfigSchema, matchesPreferences, monthlySalary, weekendStatus } from "@/lib/local/preferences";
 import { z } from "zod";
 
@@ -189,3 +190,59 @@ export async function DELETE(request: Request) {
     return Response.json({ error: error instanceof Error ? error.message : "删除失败" }, { status: 400 });
   }
 }
+
+const postJobSchema = z.object({
+  jobTitle: z.string().trim().min(1, "职位名称不能为空"),
+  company: z.string().trim().min(1, "公司名称不能为空"),
+  jobDescription: z.string().optional().default(""),
+  location: z.string().optional(),
+  salaryRange: z.string().optional(),
+  source: z.string().optional(),
+  jobUrl: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  status: progressInputSchema.optional(),
+  createdVia: z.string().optional().default("api"),
+});
+
+export async function POST(request: Request) {
+  if (process.env.JBCN_LOCAL !== "1") return new Response(null, { status: 404 });
+  try {
+    const session = await auth();
+    if (!session?.user) return new Response(null, { status: 401 });
+
+    const raw = await request.json();
+    const body = postJobSchema.parse(raw);
+
+    const result = await recordCrawledJob(
+      {
+        company: body.company,
+        jobTitle: body.jobTitle,
+        jobDescription: body.jobDescription,
+        location: body.location,
+        salaryRange: body.salaryRange,
+        source: body.source,
+        jobUrl: body.jobUrl,
+        tags: body.tags,
+        status: body.status === "unapplied" ? "draft" : body.status,
+        createdVia: body.createdVia,
+      },
+      session.user.id,
+    );
+
+    return Response.json(
+      {
+        created: result.created,
+        jobId: result.jobId ?? result.duplicateOf?.id,
+        duplicateOf: result.duplicateOf,
+        message: result.message,
+      },
+      { status: result.created ? 201 : 200 },
+    );
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "录入失败" },
+      { status: 400 },
+    );
+  }
+}
+
