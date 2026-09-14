@@ -26,6 +26,24 @@ it('采集轮次在每个搜索组后轮转平台，并按设置重复', async (
   expect(run.snapshot()).toMatchObject({ status: 'completed', added: 8, round: 2 });
 });
 
+it('搜索平台返回所选城市之外的岗位时不入库', async () => {
+  const saved: string[] = [];
+  const run = new CrawlPlanRun(async function* () {
+    yield { company: '北京公司', jobTitle: 'AI 工程师', jobDescription: '', location: '北京 北京海淀区', source: 'boss', jobUrl: 'https://example.test/beijing', salaryRange: '10-15K', tags: [] };
+    yield { company: '潍坊公司', jobTitle: 'AI 工程师', jobDescription: '', location: '山东省潍坊市奎文区', source: 'boss', jobUrl: 'https://example.test/weifang', salaryRange: '10-15K', tags: [] };
+  });
+  const config = crawlerConfigSchema.parse({ platform: 'boss', keywords: ['AI'], cities: ['潍坊'] });
+
+  run.start(crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1 }), [config], async (job) => {
+    saved.push(job.location);
+    return { created: true };
+  });
+  await run.finished();
+
+  expect(saved).toEqual(['山东省潍坊市奎文区']);
+  expect(run.snapshot()).toMatchObject({ visited: 2, added: 1, skipped: 1 });
+});
+
 it('暂停后不开始下一条，手动恢复后继续当前采集轮次', async () => {
   let release!: () => void;
   const gate = new Promise<void>((resolve) => { release = resolve; });

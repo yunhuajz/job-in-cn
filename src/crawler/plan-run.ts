@@ -132,6 +132,11 @@ export class CrawlPlanRun {
                 if (signal.aborted) return;
                 const job = next.value;
                 this.state.visited += 1;
+                if (current.city !== '全国' && current.city !== '远程' && !job.location.includes(current.city)) {
+                  this.state.skipped += 1;
+                  this.log(`地点不符已跳过：${job.jobTitle} · ${job.location || '地点未知'}（搜索城市：${current.city}）`);
+                  continue;
+                }
                 if (!matchesPreferences({ salary: job.salaryRange, location: job.location, description: job.jobDescription, experience: job.experience }, config)) {
                   this.state.skipped += 1;
                   continue;

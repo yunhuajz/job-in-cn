@@ -10,6 +10,9 @@ import {
 // 适配器经 Browser Bridge 扩展复用日常 Chrome 的登录态,主动打开标签页采集
 
 const BOSS_JOBS_URL = 'https://www.zhipin.com/web/geek/jobs';
+const BOSS_CITY_CODES: Record<string, string> = {
+  潍坊: '101120600',
+};
 // 后台窗口执行(opencli --window background):采集不再抢占用户可见的 Chrome 窗口,
 // 适配器每条详情都会 page.goto 一次,前台模式下表现为"网页一直刷新"
 const SESSION_ARGS = [
@@ -68,7 +71,7 @@ export async function bossSearch(
 ): Promise<BossJobCard[]> {
   const args = ['boss', 'search'];
   if (options.query) args.push(options.query);
-  if (options.city) args.push('--city', options.city);
+  if (options.city) args.push('--city', BOSS_CITY_CODES[options.city] ?? options.city);
   if (options.experience) args.push('--experience', options.experience);
   if (options.limit) args.push('--limit', String(options.limit));
   if (options.page) args.push('--page', String(options.page));
