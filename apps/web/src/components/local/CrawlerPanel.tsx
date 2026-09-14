@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { crawlerConfigSchema, crawlerPlanSchema, platformNames, platforms, type CrawlerConfig, type CrawlerPlan, type Platform, type CrawlCheckpoint, type CrawlPlanState } from "@/lib/local/preferences";
 import PreferenceFields, { fieldClass } from "./PreferenceFields";
+import CityField from "./CityField";
 import { readLocalJson } from "@/lib/local/response";
 
 const statusNames = { idle: '尚未开始', running: '正在采集', paused: '已暂停', stopping: '正在停止', stopped: '已停止', completed: '已完成', failed: '采集失败' };
@@ -110,9 +111,12 @@ export default function CrawlerPanel() {
           <label className="text-sm font-medium">搜索关键词
             <textarea className={fieldClass} rows={3} value={keywords} onChange={(e) => { setKeywords(e.target.value); setNotice('配置已修改'); }} placeholder="每行一个关键词，也可用逗号分隔" />
           </label>
-          <label className="text-sm font-medium">搜索城市
-            <textarea className={fieldClass} rows={3} value={cities} onChange={(e) => { setCities(e.target.value); setNotice('配置已修改'); }} placeholder="每行一个城市，如天津、青岛；支持全国、远程" />
-          </label>
+          <CityField
+            value={cities}
+            onChange={(val) => { setCities(val); setNotice('配置已修改'); }}
+            onNotice={setNotice}
+            disabled={busy}
+          />
         </div>
         <p className="text-xs text-muted-foreground">关键词与城市逐组搜索。智联未配置城市码的城市会全国搜索后按地点筛选；也可输入招聘网站城市码。</p>
         <div className="border-t pt-5"><PreferenceFields value={config} onChange={update} /></div>
