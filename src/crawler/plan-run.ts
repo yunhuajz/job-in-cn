@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import type { AddJobInput } from '../boss/map.js';
 import { crawlerConfigSchema, crawlerPlanSchema, matchesPreferences, type CrawlerConfig, type CrawlerPlan, type Platform } from './config.js';
 
@@ -48,7 +49,14 @@ export class CrawlPlanRun {
   private pauseTimer?: ReturnType<typeof setTimeout>;
   private checkpoint?: Omit<CrawlCheckpoint, 'next'>;
 
-  constructor(private source: GroupSource, private waitBetweenGroups: GroupWaiter = async () => {}, private saveCheckpoint?: (checkpoint: CrawlCheckpoint | undefined) => void) {}
+  constructor(
+    private source: GroupSource,
+    private waitBetweenGroups: GroupWaiter = async () => {},
+    private saveCheckpoint?: (checkpoint: CrawlCheckpoint | undefined) => void,
+    private waitAfterCycle: GroupWaiter = async (signal) => {
+      await delay(3600_000, undefined, { signal });
+    },
+  ) {}
 
   snapshot(): CrawlPlanState { return structuredClone(this.state); }
   finished(): Promise<void> { return this.task; }
@@ -160,6 +168,10 @@ export class CrawlPlanRun {
             }
             if (this.hasNextGroup(plan, groups, round, index, platform)) await this.waitBetweenGroups(signal, this.log);
           }
+        }
+        if (round < plan.rounds && round % 10 === 0) {
+          this.log(`已完成第 ${round} 轮采集（大循环结束），整夜防风控休眠 1 小时，稍后将重新从最新岗位开始巡检...`);
+          await this.waitAfterCycle(signal, this.log);
         }
       }
       this.state.status = signal.aborted ? 'stopped' : 'completed';

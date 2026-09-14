@@ -2,6 +2,8 @@ import { runOpencli } from '../boss/opencli.js';
 
 type OpencliRunner = (args: string[]) => Promise<unknown>;
 const JOB51_SEARCH_URL = 'https://we.51job.com/pc/search';
+import { resolveJob51CityCode, JOB51_CITY_CODES } from './city-codes.js';
+export { resolveJob51CityCode, JOB51_CITY_CODES };
 
 // opencli 51job(前程无忧)站点适配器封装 — Boss 风控期间的备用采集源
 // 与 boss/bridge.ts 同一模式:复用日常 Chrome,后台窗口执行
@@ -54,12 +56,13 @@ export async function search51Jobs(
 ): Promise<Job51Card[]> {
   const experience = typeof experienceOrRun === 'string' ? experienceOrRun : undefined;
   const run = typeof experienceOrRun === 'function' ? experienceOrRun : (runner ?? runOpencli);
+  const resolvedArea = resolveJob51CityCode(area) ?? area;
   const args = [
     '51job',
     'search',
     query,
     '--area',
-    area,
+    resolvedArea,
     '--limit',
     String(limit),
     '--page',

@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest';
-import { toBossExperience, to51JobExperience } from '../../src/crawler/sources.js';
+import { toBossExperience, to51JobExperience, toZhaopinExperience } from '../../src/crawler/sources.js';
 import { search51Jobs } from '../../src/job51/bridge.js';
 
-it('Boss 与 51job 经验映射转换正确', () => {
+it('Boss、51job 与智联经验映射转换正确', () => {
   expect(toBossExperience('fresh')).toBe('应届生(校招)');
   expect(toBossExperience('1year')).toBe('1年以内');
   expect(toBossExperience('1-3')).toBe('1-3年');
@@ -18,6 +18,14 @@ it('Boss 与 51job 经验映射转换正确', () => {
   expect(to51JobExperience('5-10')).toBe('5-7年');
   expect(to51JobExperience('fresh_or_1year')).toBeUndefined();
   expect(to51JobExperience('any')).toBeUndefined();
+
+  expect(toZhaopinExperience('fresh')).toBe('0001');
+  expect(toZhaopinExperience('1year')).toBe('0101');
+  expect(toZhaopinExperience('1-3')).toBe('0103');
+  expect(toZhaopinExperience('3-5')).toBe('0305');
+  expect(toZhaopinExperience('5-10')).toBe('0510');
+  expect(toZhaopinExperience('fresh_or_1year')).toBeUndefined();
+  expect(toZhaopinExperience('any')).toBeUndefined();
 });
 
 it('search51Jobs 支持传入经验参数并附加 --experience 命令行参数', async () => {

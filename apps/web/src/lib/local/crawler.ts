@@ -11,6 +11,6 @@ const shared = globalThis as typeof globalThis & { jbcnCrawler?: CrawlPlanRun };
 const localSearchGroup = (config: Parameters<typeof collectSearchGroup>[0], group: Parameters<typeof collectSearchGroup>[1], signal: AbortSignal, log: (text: string) => void) => collectSearchGroup(config, group, signal, log, async (jobUrl) => Boolean(await prisma.job.findFirst({ where: { jobUrl }, select: { id: true } })));
 
 export const crawler = shared.jbcnCrawler ??= new CrawlPlanRun(localSearchGroup, async (signal, log) => {
-  log("本组结束，等待 3 分钟后轮转下一个平台。");
-  await delay(180_000, undefined, { signal });
+  log("本组结束，等待 5 分钟后轮转下一个平台。");
+  await delay(300_000, undefined, { signal });
 }, (checkpoint) => configStore.saveCheckpoint(checkpoint));

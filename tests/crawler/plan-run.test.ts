@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { crawlerConfigSchema, crawlerPlanSchema } from '../../src/crawler/config.js';
 import { CrawlPlanRun } from '../../src/crawler/plan-run.js';
+import { roundToCyclePage } from '../../src/crawler/sources.js';
 
 it('采集计划支持适合长时间运行的轮次数', () => {
   expect(crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1000 }).rounds).toBe(1000);
@@ -145,4 +146,36 @@ it('从保存的搜索组位置恢复采集，不重复已完成的组', async (
   run.start(crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 1 }), [config], async () => ({ created: true }), { round: 1, index: 1 });
   await run.finished();
   expect(seen).toEqual(['第二组']);
+});
+
+it('以 10 轮为小循环递增翻页，第 11 轮作为大循环重新从第 1 页开始找最新', () => {
+  expect(roundToCyclePage(1)).toBe(1);
+  expect(roundToCyclePage(5)).toBe(5);
+  expect(roundToCyclePage(10)).toBe(10);
+  expect(roundToCyclePage(11)).toBe(1);
+  expect(roundToCyclePage(20)).toBe(10);
+  expect(roundToCyclePage(21)).toBe(1);
+});
+
+it('每完成 10 轮大循环后触发休眠等待，再开始第 11 轮巡检', async () => {
+  let cycleWaits = 0;
+  const executedRounds: number[] = [];
+  const run = new CrawlPlanRun(
+    async function* (_config, group) {
+      executedRounds.push(group.round);
+      yield { company: '公司', jobTitle: 'AI', jobDescription: '', location: '天津', source: 'boss', jobUrl: `https://example.test/${group.round}`, salaryRange: '10K', tags: [] };
+    },
+    async () => {},
+    undefined,
+    async () => { cycleWaits += 1; },
+  );
+  const config = crawlerConfigSchema.parse({ platform: 'boss', keywords: ['AI'], cities: ['天津'] });
+  run.start(crawlerPlanSchema.parse({ platforms: ['boss'], rounds: 11 }), [config], async () => ({ created: true }));
+  await run.finished();
+
+  expect(cycleWaits).toBe(1);
+  expect(executedRounds).toHaveLength(11);
+  expect(executedRounds[0]).toBe(1);
+  expect(executedRounds[9]).toBe(10);
+  expect(executedRounds[10]).toBe(11);
 });

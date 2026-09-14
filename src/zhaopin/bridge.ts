@@ -8,13 +8,7 @@ import { runOpencli } from '../boss/opencli.js';
 const WINDOW_ARGS = ['--window', process.env.OPENCLI_WINDOW ?? 'background'];
 const SESSION = 'zpharvest';
 
-export const ZHAOPIN_CITY_CODES: Record<string, string> = {
-  天津: '531',
-  济南: '702',
-  石家庄: '565',
-  青岛: '703',
-  苏州: '639',
-};
+export { resolveZhaopinCityCode, ZHAOPIN_CITY_CODES } from './city-codes.js';
 
 export interface ZpCard {
   title: string;
@@ -172,13 +166,22 @@ async function zpOpen(tabId: string, url: string): Promise<void> {
   await runOpencli(['browser', SESSION, 'open', url, '--tab', tabId, ...WINDOW_ARGS]);
 }
 
+export interface ZpSearchOptions {
+  page?: number;
+  experience?: string;
+}
+
 export async function searchZpJobs(
   tabId: string,
   query: string,
   cityCode: string | null,
+  options: ZpSearchOptions = {},
 ): Promise<ZpCard[]> {
   const jl = cityCode ? `jl=${cityCode}&` : '';
-  await zpOpen(tabId, `https://sou.zhaopin.com/?${jl}kw=${encodeURIComponent(query)}`);
+  const p = options.page && options.page > 1 ? `&p=${options.page}` : '';
+  const we = options.experience ? `&we=${encodeURIComponent(options.experience)}` : '';
+  const order = '&order=4';
+  await zpOpen(tabId, `https://sou.zhaopin.com/?${jl}kw=${encodeURIComponent(query)}${p}${we}${order}`);
   await new Promise((r) => setTimeout(r, 5000));
   const cards = mapZpExtraction(await zpEval(tabId, EXTRACT_CARDS_JS));
   console.log(`  搜索返回 ${cards.length} 张卡片`);

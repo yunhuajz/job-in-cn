@@ -1,57 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { resolveZhaopinCityCode, ZHAOPIN_CITY_CODES } from '../../src/zhaopin/bridge.js';
+import { resolveJob51CityCode, JOB51_CITY_CODES } from '../../src/job51/bridge.js';
 
-describe('智联城市映射', () => {
-  it('支持全国核心直辖市、省会与重点经济地市', () => {
-    expect(ZHAOPIN_CITY_CODES).toMatchObject({
-      北京: '530',
-      上海: '538',
-      广州: '763',
-      深圳: '765',
-      杭州: '653',
-      南京: '635',
-      武汉: '736',
-      成都: '801',
-      西安: '854',
-      重庆: '551',
-      长沙: '749',
-      郑州: '719',
-      合肥: '664',
-      福州: '681',
-      厦门: '682',
-      济南: '702',
-      青岛: '703',
-      潍坊: '708',
-      烟台: '707',
-      苏州: '639',
-      无锡: '636',
-      东莞: '779',
-      佛山: '768',
-      石家庄: '565',
-      太原: '576',
-      沈阳: '599',
-      大连: '600',
-      长春: '613',
-      哈尔滨: '622',
-      南昌: '691',
-      昆明: '831',
-      贵阳: '822',
-      南宁: '785',
-      海口: '799',
-      兰州: '864',
-      乌鲁木齐: '890',
+describe('前程无忧(51job)城市映射', () => {
+  it('支持全国核心直辖市与主要地市', () => {
+    expect(JOB51_CITY_CODES).toMatchObject({
+      北京: '010000',
+      上海: '020000',
+      广州: '030200',
+      深圳: '040000',
+      天津: '050000',
+      重庆: '060000',
+      杭州: '080200',
+      南京: '070200',
+      武汉: '180200',
+      成都: '090200',
+      西安: '200200',
+      济南: '120200',
+      青岛: '120300',
+      潍坊: '120500',
     });
   });
 
-  it('resolveZhaopinCityCode 支持带市后缀与数字代码兼容解析', () => {
-    expect(resolveZhaopinCityCode('潍坊市')).toBe('708');
-    expect(resolveZhaopinCityCode('济南市')).toBe('702');
-    expect(resolveZhaopinCityCode('成都市')).toBe('801');
-    expect(resolveZhaopinCityCode('长株潭')).toBe('749');
-    expect(resolveZhaopinCityCode('顺德')).toBe('768');
-    expect(resolveZhaopinCityCode('雄安')).toBe('570');
-    expect(resolveZhaopinCityCode('708')).toBe('708');
-    expect(resolveZhaopinCityCode('未知小镇')).toBeNull();
+  it('resolveJob51CityCode 支持带市后缀与 6 位数字代码兼容解析', () => {
+    expect(resolveJob51CityCode('潍坊市')).toBe('120500');
+    expect(resolveJob51CityCode('济南市')).toBe('120200');
+    expect(resolveJob51CityCode('成都市')).toBe('090200');
+    expect(resolveJob51CityCode('长株潭')).toBe('190200');
+    expect(resolveJob51CityCode('顺德')).toBe('030700');
+    expect(resolveJob51CityCode('雄安')).toBe('160400');
+    expect(resolveJob51CityCode('120600')).toBe('120600');
+    expect(resolveJob51CityCode('未知小镇')).toBeNull();
   });
 
   it('全量覆盖指定重点省份地级市（山东、江苏、浙江、湖北、湖南、安徽、河北、山西、福建、广东）', () => {
@@ -79,12 +57,11 @@ describe('智联城市映射', () => {
     ];
 
     for (const city of provinceChecks) {
-      const code = resolveZhaopinCityCode(city);
-      expect(code, `城市 ${city} 应有对应智联编码`).toBeTruthy();
-      expect(/^\d+$/.test(code!), `城市 ${city} 的编码 ${code} 应为纯数字`).toBe(true);
+      const code = resolveJob51CityCode(city);
+      expect(code, `城市 ${city} 应有对应 51job 6 位编码`).toBeTruthy();
+      expect(/^\d{6}$/.test(code!), `城市 ${city} 的编码 ${code} 应为 6 位数字`).toBe(true);
 
-      // 带“市”后缀也能正确解析
-      const codeWithShi = resolveZhaopinCityCode(`${city}市`);
+      const codeWithShi = resolveJob51CityCode(`${city}市`);
       expect(codeWithShi, `带市后缀的 ${city}市 应正确解析`).toBe(code);
     }
   });

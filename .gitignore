@@ -33,4 +33,6 @@ Thumbs.db
 # local ai / notes
 .claude/
 CLAUDE.md
+AGENTS.md
 CONTEXT.md
+*handoff*.md
