@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
 import { ingestJob } from "@/lib/jobs/ingest";
+import { resolveApiToken } from "@/lib/api/auth";
 import { crawlerConfigSchema, matchesPreferences, monthlySalary, weekendStatus } from "@/lib/local/preferences";
 import { z } from "zod";
 
@@ -207,8 +208,17 @@ const postJobSchema = z.object({
 export async function POST(request: Request) {
   if (process.env.JBCN_LOCAL !== "1") return new Response(null, { status: 404 });
   try {
-    const session = await auth();
-    if (!session?.user) return new Response(null, { status: 401 });
+    const authorization = request.headers.get("authorization");
+    const tokenAuth = authorization ? await resolveApiToken(request) : null;
+    if (tokenAuth && !tokenAuth.ok) {
+      return Response.json({ error: tokenAuth.error }, { status: tokenAuth.status });
+    }
+    if (tokenAuth && !tokenAuth.scopes.includes("jobs:write")) {
+      return Response.json({ error: "访问令牌没有岗位录入权限" }, { status: 403 });
+    }
+    const session = tokenAuth ? null : await auth();
+    const userId = tokenAuth?.userId ?? session?.user?.id;
+    if (!userId) return new Response(null, { status: 401 });
 
     const raw = await request.json();
     const body = postJobSchema.parse(raw);
@@ -224,9 +234,9 @@ export async function POST(request: Request) {
         jobUrl: body.jobUrl,
         tags: body.tags,
         status: body.status === "unapplied" ? "draft" : body.status,
-        createdVia: body.createdVia,
+        createdVia: tokenAuth ? `api:${tokenAuth.tokenName}` : body.createdVia,
       },
-      session.user.id,
+      userId,
     );
 
     return Response.json(
@@ -245,4 +255,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

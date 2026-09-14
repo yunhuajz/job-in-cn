@@ -1,4 +1,4 @@
-import { createJobFromNames } from "@/lib/jobs/createJobFromNames";
+import { ingestJob } from "@/lib/jobs/ingest";
 import {
   resolveCompany,
   resolveJobTitle,
@@ -43,7 +43,7 @@ const baseInput = {
   jobDescription: "Build things",
 };
 
-describe("createJobFromNames", () => {
+describe("ingestJob", () => {
   const userId = "user-1";
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe("createJobFromNames", () => {
   });
 
   it("creates a job and reports matched/created resolutions in the message", async () => {
-    const result = await createJobFromNames(baseInput, userId);
+    const result = await ingestJob(baseInput, userId);
 
     expect(result.created).toBe(true);
     expect(result.jobId).toBe("job-1");
@@ -81,7 +81,7 @@ describe("createJobFromNames", () => {
 
   it("defaults appliedDate to now when applied is true and no date given", async () => {
     const before = Date.now();
-    await createJobFromNames({ ...baseInput, applied: true }, userId);
+    await ingestJob({ ...baseInput, applied: true }, userId);
     const after = Date.now();
 
     const call = (prisma.job.create as any).mock.calls[0][0].data;
@@ -92,7 +92,7 @@ describe("createJobFromNames", () => {
 
   it("uses the given appliedDate when provided", async () => {
     const appliedDate = new Date("2026-01-01T00:00:00Z");
-    await createJobFromNames({ ...baseInput, applied: true, appliedDate }, userId);
+    await ingestJob({ ...baseInput, applied: true, appliedDate }, userId);
 
     const call = (prisma.job.create as any).mock.calls[0][0].data;
     expect(call.appliedDate).toBe(appliedDate);
@@ -104,13 +104,13 @@ describe("createJobFromNames", () => {
       dropped: ["Extra1", "Extra2"],
     });
 
-    const result = await createJobFromNames(baseInput, userId);
+    const result = await ingestJob(baseInput, userId);
 
     expect(result.message).toContain("Dropped tags exceeding limit: Extra1, Extra2.");
   });
 
   it("skips duplicate detection when allowDuplicate is true", async () => {
-    await createJobFromNames({ ...baseInput, allowDuplicate: true }, userId);
+    await ingestJob({ ...baseInput, allowDuplicate: true }, userId);
 
     expect(prisma.job.findFirst).not.toHaveBeenCalled();
     expect(prisma.job.create).toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe("createJobFromNames", () => {
       Company: { label: "Acme" },
     });
 
-    const result = await createJobFromNames(
+    const result = await ingestJob(
       { ...baseInput, jobUrl: "https://example.com/job/1" },
       userId,
     );
@@ -146,7 +146,7 @@ describe("createJobFromNames", () => {
       Company: { label: "Acme" },
     });
 
-    const result = await createJobFromNames(baseInput, userId);
+    const result = await ingestJob(baseInput, userId);
 
     expect(result.created).toBe(false);
     expect(result.duplicateOf?.id).toBe("existing-job-2");
@@ -154,7 +154,7 @@ describe("createJobFromNames", () => {
   });
 
   it("creates the job when no duplicate is found", async () => {
-    const result = await createJobFromNames(baseInput, userId);
+    const result = await ingestJob(baseInput, userId);
 
     expect(result.created).toBe(true);
     expect(result.duplicateOf).toBeUndefined();

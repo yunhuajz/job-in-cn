@@ -4,7 +4,7 @@ import { Bot, Key, Palette, Plug } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 
-export type SettingsSection = "ai-provider" | "api-keys" | "appearance" | "mcp-access";
+export type SettingsSection = "ai-provider" | "api-keys" | "appearance" | "api-access";
 
 const SETTINGS_SECTIONS: {
   id: SettingsSection;
@@ -14,7 +14,7 @@ const SETTINGS_SECTIONS: {
   { id: "ai-provider", label: "评分模型", icon: Bot },
   { id: "api-keys", label: "API Key", icon: Key },
   { id: "appearance", label: "外观", icon: Palette },
-  { id: "mcp-access", label: "MCP 接入", icon: Plug },
+  { id: "api-access", label: "API 接入", icon: Plug },
 ];
 
 interface SettingsSidebarProps {

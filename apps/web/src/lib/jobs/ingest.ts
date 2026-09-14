@@ -178,7 +178,7 @@ async function detectDuplicate(
   }
 
   // Tier 2 — company + title within window
-  const windowDays = APP_CONSTANTS.MCP_DUPLICATE_WINDOW_DAYS;
+  const windowDays = APP_CONSTANTS.JOB_DUPLICATE_WINDOW_DAYS;
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
   const byNameWindow = await prisma.job.findFirst({
     where: {

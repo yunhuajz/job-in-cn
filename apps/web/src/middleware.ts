@@ -14,7 +14,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
     return NextResponse.next();
   }
   const path = request.nextUrl.pathname;
-  if (path.startsWith('/dashboard') || (path.startsWith('/api') && !path.startsWith('/api/auth') && !path.startsWith('/api/mcp'))) return authenticated(request, event);
+  if (path.startsWith('/dashboard') || (path.startsWith('/api') && !path.startsWith('/api/auth') && path !== '/api/local/jobs')) return authenticated(request, event);
   return NextResponse.next();
 }
 

@@ -1,5 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { DELETE, GET, POST } from "@/app/api/local/jobs/route";
+import { resolveApiToken } from "@/lib/api/auth";
+
+vi.mock("@/lib/api/auth", () => ({ resolveApiToken: vi.fn() }));
 
 vi.mock("@/lib/jobs/ingest", () => ({
   ingestJob: vi.fn(async (input: any, _userId: string) => {
@@ -114,6 +117,27 @@ it("POST 录入新岗位返回 201 与 jobId", async () => {
   expect(data).toMatchObject({ created: true, jobId: "new-job-id" });
 });
 
+it("外部程序可用 API Bearer Token 录入岗位", async () => {
+  vi.stubEnv("JBCN_LOCAL", "1");
+  vi.mocked(resolveApiToken).mockResolvedValueOnce({
+    ok: true,
+    userId: "token-owner",
+    scopes: ["jobs:write"],
+    tokenName: "AI 搜索工具",
+  });
+  const response = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer jbcn_test" },
+    body: JSON.stringify({ jobTitle: "AI 工程师", company: "测试公司" }),
+  }));
+
+  expect(response.status).toBe(201);
+  expect(vi.mocked(await import("@/lib/jobs/ingest")).ingestJob).toHaveBeenCalledWith(
+    expect.objectContaining({ jobTitle: "AI 工程师", createdVia: "api:AI 搜索工具" }),
+    "token-owner",
+  );
+});
+
 it("POST 录入已存在岗位幂等返回 200 与已有 jobId", async () => {
   vi.stubEnv("JBCN_LOCAL", "1");
   const response = await POST(new Request("http://127.0.0.1:3737/api/local/jobs", {
@@ -137,4 +161,3 @@ it("POST 缺少必填字段时返回 400 校验错误", async () => {
   const data = await response.json();
   expect(data.error).toBeDefined();
 });
-

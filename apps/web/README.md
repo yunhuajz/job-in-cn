@@ -35,7 +35,7 @@ Job searching can be overwhelming, with numerous applications to track and deadl
 
 - **AI Assistant:** Leverage the power of AI to improve your resumes and match with jobs. Get personalized job matching with scoring to identify the best opportunities tailored to your profile.
 
-- **AI Agent Integration (MCP):** Connect AI agents like Claude Desktop via a built-in MCP server to add job applications and Question Bank entries directly from your chat, with your approval. When a job description is substantial enough, the agent can also analyze it against your default resume and save a job match score right from the chat.
+- **岗位录入 API：** 外部 AI 工具或普通脚本可以通过标准 HTTP POST 将岗位保存到系统，系统统一执行实体解析和去重。投递仍需用户在页面确认。
 
 
 ## Free to Use and Self-Hosted
@@ -103,77 +103,11 @@ Set up automations that search for new jobs on a schedule and AI-match them agai
 
 More job board sources are on the way. Discovered jobs are surfaced for review — accept the ones you like to promote them into your job tracker, or dismiss the rest.
 
-### MCP Server (AI Agent Integration)
+### 岗位录入 API
 
-JobSync exposes an MCP server so AI agents (Claude Desktop, Hermes, OpenClaw, etc.) can add job applications and Question Bank entries directly, with your approval.
+在“设置 → API 接入”中创建访问令牌后，外部 AI 工具或脚本可以调用 `POST /api/local/jobs` 录入岗位。请求使用 `Authorization: Bearer <令牌>` 鉴权，支持职位、公司、地点、职位描述、薪资、来源、原始链接和标签等字段。
 
-#### Use Case
-
-Browsing a job posting or reading an interview question elsewhere and don't want to break your flow to log it manually? Just ask your connected AI agent, for example:
-
-- *"Add this job to JobSync (copy/paste the complete job details or try providing a link): Senior Backend Engineer at Acme Corp, JobType, location, Job description... "*
-- *"I just got asked this in an interview — add it to my Question Bank: 'How would you design a rate limiter?' with my answer: ..."*
-
-The agent resolves or creates the company, title, location, and tags by name, and reports back what it matched versus created — so your data stays de-duplicated without you having to switch to the app.
-
-When you add a job with a substantial description and you've set a **default resume** (Profile), the agent also analyzes the fit against that resume and saves a job match score — no round trip to the app needed. The result shows up on the job just like an in-app AI match, scores, recommendation, and write-up included.
-
-#### 1. Generate a token
-
-1. Sign in to JobSync and go to **Settings > MCP Access**.
-2. Click **Generate**, give it a name (e.g. the client you'll connect, like "Claude Desktop"), and pick an expiry.
-3. Copy the token and config snippets shown — the full token is only displayed once.
-
-#### 2. Add it to your MCP client
-
-<details>
-<summary><strong>Claude Desktop</strong></summary>
-
-1. Open Claude Desktop → **Settings > Developer > Edit Config**. This opens `claude_desktop_config.json` in your default editor.
-2. Paste the "Claude Desktop (via mcp-remote)" snippet from the reveal dialog into `mcpServers`, e.g.:
-
-```json
-{
-  "mcpServers": {
-    "jobsync": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "http://<your-jobsync-url>/api/mcp",
-        "--header",
-        "Authorization: Bearer <your-token>"
-      ]
-    }
-  }
-}
-```
-
-3. Save and fully restart Claude Desktop (quit, not just close the window).
-
-> **Note:** Claude Desktop only supports local (stdio) MCP servers directly, so `mcp-remote` is required as a bridge to JobSync's remote endpoint.
-
-</details>
-
-<details>
-<summary><strong>Other clients (OpenClaw, Hermes, etc.)</strong></summary>
-
-Clients that support `streamable-http` natively can connect directly without `mcp-remote`:
-
-```json
-{
-  "mcpServers": {
-    "jobsync": {
-      "type": "streamable-http",
-      "url": "http://<your-jobsync-url>/api/mcp",
-      "headers": { "Authorization": "Bearer <your-token>" }
-    }
-  }
-}
-```
-
-</details>
-
-> **Self-hosting on a home network?** If your JobSync URL is a plain `http://` LAN address (not `localhost` or HTTPS), add `--allow-http` to the `mcp-remote` args — it refuses non-HTTPS URLs by default. The Settings page adds this flag automatically when it detects a non-localhost HTTP URL.
+API 只负责岗位录入，不提供自动投递能力。系统会统一执行名称解析、链接标准化和重复检查，投递仍由用户在页面中确认。
 
 
 ## Contributing

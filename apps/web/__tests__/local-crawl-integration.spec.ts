@@ -21,14 +21,14 @@ beforeAll(async () => {
 afterAll(async () => { vi.unstubAllEnvs(); await database?.cleanup(); });
 
 it("采集结果进入原账号的岗位列表，同一 URL 重采不重复入库", async () => {
-  const { createJobFromNames } = await import("@/lib/jobs/createJobFromNames");
+  const { ingestJob } = await import("@/lib/jobs/ingest");
   const { GET } = await import("@/app/api/local/jobs/route");
   const job = { company: "测试公司", jobTitle: "开发工程师", salaryRange: "8-12K", jobDescription: "周末双休", location: "天津", source: "Boss直聘", jobUrl: "https://www.zhipin.com/job_detail/test.html", tags: [] };
   const run = new CrawlPlanRun(async function* () { yield job; yield job; });
   run.start(
     crawlerPlanSchema.parse({ platforms: ["boss"], rounds: 1 }),
     [crawlerConfigSchema.parse({ platform: "boss", keywords: ["开发"], cities: ["天津"] })],
-    (input) => createJobFromNames(input, "local-owner"),
+    (input) => ingestJob(input, "local-owner"),
   );
   await run.finished();
   expect(run.snapshot()).toMatchObject({ status: "completed", added: 1, duplicates: 1 });
@@ -39,11 +39,11 @@ it("采集结果进入原账号的岗位列表，同一 URL 重采不重复入�
 });
 
 it("同一岗位重复采集时保留一个主体岗位，并可按每次采集日期查到", async () => {
-  const { recordCrawledJob } = await import("@/lib/local/jobs");
+  const { ingestJob } = await import("@/lib/jobs/ingest");
   const { GET } = await import("@/app/api/local/jobs/route");
   const job = { company: "测试公司", jobTitle: "数据工程师", salaryRange: "10-15K", jobDescription: "双休", location: "天津", source: "前程无忧51job", jobUrl: "https://example.test/jobs/data", tags: [] };
-  await recordCrawledJob(job, "local-owner", new Date("2026-09-01T08:00:00.000Z"));
-  await recordCrawledJob(job, "local-owner", new Date("2026-09-03T08:00:00.000Z"));
+  await ingestJob(job, "local-owner", new Date("2026-09-01T08:00:00.000Z"));
+  await ingestJob(job, "local-owner", new Date("2026-09-03T08:00:00.000Z"));
 
   const response = await GET(new Request("http://127.0.0.1:3737/api/local/jobs?from=2026-09-03&to=2026-09-03"));
   const body = await response.json();
@@ -56,9 +56,9 @@ it("同一岗位重复采集时保留一个主体岗位，并可按每次采集�
 });
 
 it("岗位页可批量标记求职进度，并按进度筛选", async () => {
-  const { recordCrawledJob } = await import("@/lib/local/jobs");
+  const { ingestJob } = await import("@/lib/jobs/ingest");
   const { GET, PATCH } = await import("@/app/api/local/jobs/route");
-  const created = await recordCrawledJob({ company: "测试公司", jobTitle: "算法工程师", salaryRange: "15-20K", jobDescription: "双休", location: "天津", source: "智联招聘", jobUrl: "https://example.test/jobs/algorithm", tags: [] }, "local-owner");
+  const created = await ingestJob({ company: "测试公司", jobTitle: "算法工程师", salaryRange: "15-20K", jobDescription: "双休", location: "天津", source: "智联招聘", jobUrl: "https://example.test/jobs/algorithm", tags: [] }, "local-owner");
 
   const response = await PATCH(new Request("http://127.0.0.1:3737/api/local/jobs", {
     method: "PATCH", body: JSON.stringify({ ids: [created.jobId], progress: "applied" }),
@@ -71,9 +71,9 @@ it("岗位页可批量标记求职进度，并按进度筛选", async () => {
 });
 
 it("批量自动投递没有明确确认时拒绝执行", async () => {
-  const { recordCrawledJob } = await import("@/lib/local/jobs");
+  const { ingestJob } = await import("@/lib/jobs/ingest");
   const { POST } = await import("@/app/api/local/apply/route");
-  const created = await recordCrawledJob({ company: "测试公司", jobTitle: "后端工程师", salaryRange: "15-20K", jobDescription: "双休", location: "天津", source: "Boss直聘", jobUrl: "https://www.zhipin.com/job_detail/confirm.html", tags: [] }, "local-owner");
+  const created = await ingestJob({ company: "测试公司", jobTitle: "后端工程师", salaryRange: "15-20K", jobDescription: "双休", location: "天津", source: "Boss直聘", jobUrl: "https://www.zhipin.com/job_detail/confirm.html", tags: [] }, "local-owner");
   const response = await POST(new Request("http://127.0.0.1:3737/api/local/apply", {
     method: "POST", body: JSON.stringify({ ids: [created.jobId], confirmed: false }),
   }));
@@ -82,9 +82,9 @@ it("批量自动投递没有明确确认时拒绝执行", async () => {
 });
 
 it("LLM 评分未选择模型时提示先完成 AI 设置", async () => {
-  const { recordCrawledJob } = await import("@/lib/local/jobs");
+  const { ingestJob } = await import("@/lib/jobs/ingest");
   const { POST } = await import("@/app/api/local/score/route");
-  const created = await recordCrawledJob({ company: "测试公司", jobTitle: "产品经理", salaryRange: "15-20K", jobDescription: "负责产品规划和数据分析", location: "天津", source: "Boss直聘", jobUrl: "https://example.test/jobs/score", tags: [] }, "local-owner");
+  const created = await ingestJob({ company: "测试公司", jobTitle: "产品经理", salaryRange: "15-20K", jobDescription: "负责产品规划和数据分析", location: "天津", source: "Boss直聘", jobUrl: "https://example.test/jobs/score", tags: [] }, "local-owner");
   const response = await POST(new Request("http://127.0.0.1:3737/api/local/score", {
     method: "POST", body: JSON.stringify({ ids: [created.jobId] }),
   }));
@@ -148,4 +148,3 @@ it("POST /api/local/jobs 端点可直接录入岗位，且重复录入幂等更�
   expect(listData.total).toBe(1);
   expect(listData.jobs[0]).toMatchObject({ id: data1.jobId, title: "全栈工程师", company: "极简科技" });
 });
-

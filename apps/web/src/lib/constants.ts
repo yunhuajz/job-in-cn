@@ -88,18 +88,10 @@ export const APP_CONSTANTS = {
   LEVER_FETCH_TIMEOUT_MS: 25_000, // wraps the WHOLE paginated loop per board
   LEVER_FETCH_CONCURRENCY: 5,
 
-  // MCP server settings
-  MCP_DUPLICATE_WINDOW_DAYS: 30,
-  MCP_TOKEN_EXPIRY_PRESETS: [30, 90, 365] as const,
-  MCP_TOKEN_EXPIRY_DEFAULT_DAYS: 90,
-  MCP_TOKEN_MAX_PER_USER: 10,
-  // AJS: 一轮 boss:harvest 约 100+ 次 add_job,30/小时会把整批打成限流错误
-  MCP_RATE_LIMIT_MAX: 900,
-  MCP_RATE_LIMIT_WINDOW_MS: 60 * 60 * 1000,
-  MCP_DEFAULT_JOB_TYPE: "Full-time",
-  MCP_DEFAULT_STATUS: "draft",
-  MCP_MATCH_MIN_DESCRIPTION_LENGTH: 200,
-  MCP_MATCH_PROVIDER_MARKER: "mcp",
+  JOB_DUPLICATE_WINDOW_DAYS: 30,
+  API_TOKEN_EXPIRY_PRESETS: [30, 90, 365] as const,
+  API_TOKEN_EXPIRY_DEFAULT_DAYS: 90,
+  API_TOKEN_MAX_PER_USER: 10,
 
   // File uploads
   UPLOADS_DIR: process.env.NODE_ENV !== "production" ? "data" : "/data",

@@ -34,7 +34,7 @@ model User {
   Note           Note[]
   Tag            Tag[]
   Question       Question[]
-  McpAccessToken McpAccessToken[]
+  ApiAccessToken ApiAccessToken[]
   defaultResumeId String?
   defaultResume   Resume?          @relation("UserDefaultResume", fields: [defaultResumeId], references: [id], onDelete: SetNull)
 }
@@ -521,7 +521,7 @@ model Question {
   @@index([createdBy])
 }
 
-model McpAccessToken {
+model ApiAccessToken {
   id          String    @id @default(uuid())
   userId      String
   User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)

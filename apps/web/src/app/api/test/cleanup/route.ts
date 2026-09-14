@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     locations = [],
     activityTypes = [],
     tags = [],
-    mcpTokens = [],
+    apiTokens = [],
   }: {
     jobIds?: string[];
     resumes?: string[];
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     locations?: string[];
     activityTypes?: string[];
     tags?: string[];
-    mcpTokens?: string[];
+    apiTokens?: string[];
   } = await req.json();
 
   // Delete jobs, resumes and tasks first (they/their sections reference the
@@ -85,9 +85,9 @@ export async function POST(req: NextRequest) {
   await deleteLibraryByName("location", locations, userId);
   await deleteLibraryByName("activityType", activityTypes, userId);
   await deleteTagsByName(tags, userId);
-  if (mcpTokens.length > 0) {
-    await prisma.mcpAccessToken.deleteMany({
-      where: { name: { in: mcpTokens }, userId },
+  if (apiTokens.length > 0) {
+    await prisma.apiAccessToken.deleteMany({
+      where: { name: { in: apiTokens }, userId },
     });
   }
 
